@@ -58,3 +58,8 @@ The server should now be running at http://127.0.0.1:5000/.
   **Output:**
   
   - `claimId` (String): The identifier for the claim.
+
+  ## Next Steps
+  Add API authentication system
+  
+  Integrate with blockchain through account abstraction
