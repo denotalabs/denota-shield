@@ -11,7 +11,8 @@ def register_onramp():
     coverage_tier = request.json.get('coverageTier')
     historical_chargeback_data = request.json.get('historicalChargebackData')
 
-    # TODO: Process and store the data
+    # TODO: Onboard the onramp and return credentials
+
     # For now, returning a stubbed response
     return jsonify({
         "clientId": "stubbed_client_id",
@@ -27,7 +28,8 @@ def add_transaction():
     payment_time = request.json.get('paymentTime')
     withdrawal_time = request.json.get('withdrawalTime')
 
-    # TODO: Process and store the transaction data
+    # TODO: Mint nota NFT
+
     # For now, returning a stubbed response
     return jsonify({
         "notaId": "stubbed_nota_id"
