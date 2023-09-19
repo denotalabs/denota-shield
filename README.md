@@ -1,5 +1,5 @@
 # Denota Shield API
-This API is designed to facilitate the onboarding of partners, management of transactions, and initiation of recovery processes for Denota.
+This API is designed to facilitate interaction with the Denota protocol. The API includes endpoints for the onboarding, transaction management, and recovery.
 
 ## Setup
 Ensure you have Python and Flask installed.
