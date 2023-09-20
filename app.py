@@ -5,7 +5,7 @@ app = Flask(__name__)
 # Onboarding endpoint
 
 
-@app.route('/registerOnramp', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def register_onramp():
     onramp_name = request.json.get('onrampName')
     coverage_tier = request.json.get('coverageTier')
