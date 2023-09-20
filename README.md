@@ -14,9 +14,9 @@ The server should now be running at http://127.0.0.1:5000/.
 
 ## Endpoints
 
-### 1. Onboarding - `registerOnramp`
+### 1. Onboarding - `register`
 
-- **Endpoint:** `/registerOnramp`
+- **Endpoint:** `/register`
 - **Method:** `POST`
 
   **Input Parameters:**
