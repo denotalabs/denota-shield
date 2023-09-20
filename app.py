@@ -2,9 +2,8 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
+
 # Onboarding endpoint
-
-
 @app.route('/register', methods=['POST'])
 def register_onramp():
     onramp_name = request.json.get('onrampName')
@@ -20,10 +19,8 @@ def register_onramp():
     })
 
 # Transactions endpoint
-
-
-@app.route('/addTransaction', methods=['POST'])
-def add_transaction():
+@app.route('/nota', methods=['POST'])
+def add_nota():
     payment_amount = request.json.get('paymentAmount')
     payment_time = request.json.get('paymentTime')
     withdrawal_time = request.json.get('withdrawalTime')
@@ -36,15 +33,21 @@ def add_transaction():
     })
 
 # Recovery endpoint
-
-
-@app.route('/initiateRecovery', methods=['POST'])
+@app.route('/recovery', methods=['POST'])
 def initiate_recovery():
     nota_id = request.json.get('notaId')
     proof_of_chargeback = request.json.get('proofOfChargeback')
 
     # TODO: Process the recovery request
     # For now, returning a stubbed response
+    return jsonify({
+        "claimId": "stubbed_claim_id"
+    })
+
+# Recovery status endpoint
+@app.route('/recovery/<int:nota_id>', methods=['GET'])
+def get_recovery(nota_id):
+    # TODO: pull the nota status
     return jsonify({
         "claimId": "stubbed_claim_id"
     })

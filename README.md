@@ -14,9 +14,9 @@ The server should now be running at http://127.0.0.1:5000/.
 
 ## Endpoints
 
-### 1. Onboarding - `registerOnramp`
+### 1. Onboarding - `register`
 
-- **Endpoint:** `/registerOnramp`
+- **Endpoint:** `/register`
 - **Method:** `POST`
 
   **Input Parameters:**
@@ -30,9 +30,9 @@ The server should now be running at http://127.0.0.1:5000/.
   - `clientId` (String): The client ID used to authenticate API calls.
   - `clientSecret` (String): The client secret used to authenticate API calls.
 
-### 2. Transactions - `addTransaction`
+### 2. Creating Nota - `nota`
 
-- **Endpoint:** `/addTransaction`
+- **Endpoint:** `/nota`
 - **Method:** `POST`
 
   **Input Parameters:**
@@ -45,15 +45,29 @@ The server should now be running at http://127.0.0.1:5000/.
   
   - `notaId` (String): An identifier for the transaction.
 
-### 3. Recovery - `initiateRecovery`
 
-- **Endpoint:** `/initiateRecovery`
+### 3. Recovery - `recovery`
+
+- **Endpoint:** `/recovery`
 - **Method:** `POST`
 
   **Input Parameters:**
   
   - `notaId` (String): The identifier for the transaction.
   - `proofOfChargeback` (String): Encrypted proof of the chargeback.
+
+  **Output:**
+  
+  - `claimId` (String): The identifier for the claim.
+
+### 4. Recovery Status - `recovery`
+
+- **Endpoint:** `/recovery`
+- **Method:** `GET`
+
+  **Input Parameters:**
+  
+  - `notaId` (String): The identifier for the transaction.
 
   **Output:**
   
