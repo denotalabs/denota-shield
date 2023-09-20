@@ -45,10 +45,8 @@ def initiate_recovery():
     })
 
 # Recovery status endpoint
-@app.route('/recovery', methods=['GET'])
-def get_recovery():
-    nota_id = request.json.get('notaId')
-
+@app.route('/recovery/<int:nota_id>', methods=['GET'])
+def get_recovery(nota_id):
     # TODO: pull the nota status
     return jsonify({
         "claimId": "stubbed_claim_id"
