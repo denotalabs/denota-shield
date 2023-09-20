@@ -2,8 +2,23 @@
 This API is designed to facilitate interaction with the Denota protocol. The API includes endpoints for the onboarding, transaction management, and recovery.
 
 ## Setup
-Ensure you have Python and Flask installed.
 Clone the repository.
+
+Create the virtual environment
+```bash
+$ python -m venv venv
+```
+
+Activate the virtual environment
+```bash
+$ source venv/bin/activate
+```
+
+Install the requirements
+```bash
+$ pip install -r requirements.txt
+```
+
 Navigate to the project directory and run the Flask application:
 
 ```bash
