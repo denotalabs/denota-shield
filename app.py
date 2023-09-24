@@ -31,7 +31,7 @@ def register_onramp():
     
     # TODO generate user's web3 wallet then save to the database
 
-    return "Registration successful", 201
+    return f"Registration successful: {status_code}", status_code
 
 def token_required(f):
     @wraps(f)
@@ -48,6 +48,24 @@ def token_required(f):
 
     return decorated_function
 
+
+# Onboarding endpoint
+@app.route('/signin', methods=['POST'])
+def onramp_signin():
+    onramp_email = request.json.get('onrampEmail')
+    password = request.json.get('password')
+
+    # Input validation
+    if not all([onramp_email, password]):
+        print(onramp_email, password)
+        return jsonify({"error": "Required fields are missing"}), 400
+    
+    session = supabase.auth.sign_in(onramp_email, password) # This returns a dict with the user's id
+    status_code = session.get("status_code")
+    if (status_code != 200) and (status_code != 201):
+        return jsonify({"error": status_code}), status_code
+    
+    return session.get("access_token"), status_code
 
 # Transactions endpoint
 @app.route('/nota', methods=['POST'])
