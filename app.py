@@ -1,13 +1,15 @@
 from flask import Flask, jsonify, request
 from supabase_py import create_client, Client
 from functools import wraps
-import os
+import dotenv
 
-app = Flask(__name__)
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
+
+env_path = ".env"
+url: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_URL')
+key: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_KEY')
 supabase: Client = create_client(url, key)
 
+app = Flask(__name__)
 
 # Onboarding endpoint
 @app.route('/register', methods=['POST'])
@@ -78,4 +80,4 @@ def get_recovery(nota_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=3000)
