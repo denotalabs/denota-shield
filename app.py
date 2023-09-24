@@ -14,16 +14,24 @@ app = Flask(__name__)
 # Onboarding endpoint
 @app.route('/register', methods=['POST'])
 def register_onramp():
-    onramp_email = request.json.get('onrampName')
+    onramp_name = request.json.get('onrampName')
+    onramp_email = request.json.get('onrampEmail')
     password = request.json.get('password')
     coverage_tier = request.json.get('coverageTier')
     historical_chargeback_data = request.json.get('historicalChargebackData')
 
-    res = supabase.auth.sign_up({"email": onramp_email, "password": password, "options": { "data": {"coverage_tier": coverage_tier, "historical_chargeback_data": historical_chargeback_data}}})
+    # Input validation
+    if not all([onramp_name, onramp_email, password, coverage_tier]):
+        return jsonify({"error": "Required fields are missing"}), 400
+    
+    res = supabase.auth.sign_up(onramp_email, password) # This returns a dict with the user's id
+    status_code = res.get("status_code")
+    if (status_code != 200) and (status_code != 201):
+        return jsonify({"error": status_code}), status_code
+    
+    # TODO generate user's web3 wallet then save to the database
 
-    if res.error:
-        return jsonify({"error": res.error.message}), 400
-    return jsonify({"message": "User created successfully!"}), 201
+    return "Registration successful", 201
 
 def token_required(f):
     @wraps(f)
