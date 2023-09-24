@@ -14,9 +14,9 @@ app = Flask(__name__)
 # Onboarding endpoint
 @app.route('/register', methods=['POST'])
 def register_onramp():
-    onramp_name = request.json.get('onrampName')
-    onramp_email = request.json.get('onrampEmail')
+    onramp_email = request.json.get('email')
     password = request.json.get('password')
+    onramp_name = request.json.get('onrampName')
     coverage_tier = request.json.get('coverageTier')
     historical_chargeback_data = request.json.get('historicalChargebackData')
 
@@ -25,11 +25,22 @@ def register_onramp():
         return jsonify({"error": "Required fields are missing"}), 400
     
     res = supabase.auth.sign_up(onramp_email, password) # This returns a dict with the user's id
+    if res is None:
+        return jsonify({"error": "User already exists"}), 400
     status_code = res.get("status_code")
     if (status_code != 200) and (status_code != 201):
         return jsonify({"error": status_code}), status_code
     
-    # TODO generate user's web3 wallet then save to the database
+    # TODO generate user's web3 wallet then save it to the database
+
+    # add to user table
+    user_data = {
+        "id": res.get("id"),
+        "name": onramp_name,
+        "coverage_tier": coverage_tier,
+        "historical_chargeback_data": historical_chargeback_data
+    }
+    response = supabase.table("User").insert(user_data).execute() # TODO ensure that this succeeds before continuing
 
     return f"Registration successful: {status_code}", status_code
 
@@ -52,12 +63,11 @@ def token_required(f):
 # Onboarding endpoint
 @app.route('/signin', methods=['POST'])
 def onramp_signin():
-    onramp_email = request.json.get('onrampEmail')
+    onramp_email = request.json.get('email')
     password = request.json.get('password')
 
     # Input validation
     if not all([onramp_email, password]):
-        print(onramp_email, password)
         return jsonify({"error": "Required fields are missing"}), 400
     
     session = supabase.auth.sign_in(onramp_email, password) # This returns a dict with the user's id
