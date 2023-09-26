@@ -14,6 +14,7 @@ supabase: Client = create_client(url, key)
 INFURA_URL = 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID'
 w3 = Web3(Web3.HTTPProvider(INFURA_URL))
 registrar = w3.eth.contract(address="", abi={})
+coverage = w3.eth.contract(address="", abi={})
 
 
 app = Flask(__name__)
@@ -170,9 +171,11 @@ def initiate_recovery():
     user = supabase.auth.api.get_user(request.headers.get('Authorization'))
 
     user_id = user["id"]
+    private_key = user["private_key"]
     nota_id = request.json.get('notaId')
 
-    # TODO: Initiate recovery onchain
+    # Initiate recovery onchain
+    tx_hash = initiate_onchain_recovery(private_key, "", nota_id)
 
     notas = supabase.table("Nota").select(
         "*").eq("id", str(nota_id)).eq("user_id", str(user_id)).execute()  # Limit 1?
@@ -195,7 +198,26 @@ def initiate_recovery():
     if (status_code != 200) and (status_code != 201):
         return jsonify({"error": status_code}), status_code
 
-    return jsonify({"message": "success"}), status_code
+    return jsonify({"message": "success", "hash": tx_hash}), status_code
+
+
+def initiate_onchain_recovery(key, address, nota_id):
+    transaction = coverage.functions.recoverFunds(nota_id).buildTransaction({
+        'chainId': 1,  # For mainnet
+        'gas': 2000000,  # Estimated gas, change accordingly
+        'gasPrice': w3.toWei('20', 'gwei'),
+        'nonce': w3.eth.getTransactionCount(address)
+    })
+    # Sign the transaction
+    signed_txn = w3.eth.account.signTransaction(transaction, key)
+
+    # Send the transaction
+    txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
+
+    # Wait for the transaction receipt
+    receipt = w3.eth.waitForTransactionReceipt(txn_hash)
+
+    return receipt['transactionHash'].hex()
 
 # Recovery status endpoint
 
