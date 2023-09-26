@@ -124,24 +124,51 @@ def add_nota():
 @app.route('/recovery', methods=['POST'])
 @token_required
 def initiate_recovery():
+    user = supabase.auth.api.get_user(request.headers.get('Authorization'))
+    
+    user_id = user["id"]
     nota_id = request.json.get('notaId')
-    proof_of_chargeback = request.json.get('proofOfChargeback')
 
-    # TODO: Process the recovery request
-    # For now, returning a stubbed response
-    return jsonify({
-        "claimId": "stubbed_claim_id"
-    })
+    notas = supabase.table("Nota").select("*").eq("id", str(nota_id)).eq("user_id", str(user_id)).execute() # Limit 1?
+    if notas is None:
+        return jsonify({"error": "Doesn't exist or not authorized"}), 400
+    
+    nota = notas.get("data")
+
+    if len(nota) > 1:
+        raise Exception("More than one nota was created")
+    nota = nota[0]
+
+    proof_of_chargeback = request.json.get('proofOfChargeback')
+    old_nota = supabase.table("Nota").select("*").eq("id", str(nota_id)).execute()
+    old_nota = old_nota.get("data")[0]
+
+    old_nota["proof_of_chargeback"] = proof_of_chargeback
+    old_nota["recovery_status"] = 1
+
+    res = supabase.table("Nota").update(old_nota).eq("id", str(nota_id)).execute()
+    
+    status_code = res.get("status_code")
+    if (status_code != 200) and (status_code != 201):
+        return jsonify({"error": status_code}), status_code
+
+    return jsonify({"message": "success"}), status_code # TODO What should this return?
 
 # Recovery status endpoint
 @app.route('/recovery/<int:nota_id>', methods=['GET'])
 @token_required
 def get_recovery(nota_id):
-    # TODO: pull the nota status
-    return jsonify({
-        "claimId": "stubbed_claim_id"
-    })
+    user = supabase.auth.api.get_user(request.headers.get('Authorization'))
+    user_id = user["id"]
+    
+    nota = supabase.table("Nota").select("*").eq("id", str(nota_id)).eq("user_id", user_id).execute()
+    if not nota:
+        return jsonify({"error": "Doesn't exist or not authorized"}), 400
+    
+    return jsonify({"status": nota.data[0]["recovery_status"]})
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
+
