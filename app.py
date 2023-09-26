@@ -152,9 +152,9 @@ def mint_onchain_nota(key, address, payment_amount, risk_score):
     payload = w3.eth.encodeABI(
         ["address", "uint256", "unit256"], ["", 1000, 50])
     transaction = registrar.functions.mint("token", 0, risk_fee, "coverageModule", "coverageModule", payload).buildTransaction({
-        'chainId': 1,  # For mainnet
+        'chainId': 80001,  # For mainnet
         'gas': 2000000,  # Estimated gas, change accordingly
-        'gasPrice': w3.toWei('20', 'gwei'),
+        'gasPrice': w3.toWei('200', 'gwei'),
         'nonce': w3.eth.getTransactionCount(address)
     })
     # Sign the transaction
@@ -209,9 +209,9 @@ def initiate_recovery():
 
 def initiate_onchain_recovery(key, address, nota_id):
     transaction = coverage.functions.recoverFunds(nota_id).buildTransaction({
-        'chainId': 1,  # For mainnet
+        'chainId': 80001,  # For mainnet
         'gas': 2000000,  # Estimated gas, change accordingly
-        'gasPrice': w3.toWei('20', 'gwei'),
+        'gasPrice': w3.toWei('200', 'gwei'),
         'nonce': w3.eth.getTransactionCount(address)
     })
     # Sign the transaction
