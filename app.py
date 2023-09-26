@@ -140,12 +140,10 @@ def initiate_recovery():
     nota = nota[0]
 
     proof_of_chargeback = request.json.get('proofOfChargeback')
-    new_nota = supabase.table("Nota").select("*").eq("id", str(nota_id)).execute()
-    new_nota = new_nota.get("data")[0]
-    new_nota["proof_of_chargeback"] = proof_of_chargeback
-    new_nota["recovery_status"] = 1
+    nota["proof_of_chargeback"] = proof_of_chargeback
+    nota["recovery_status"] = 1
 
-    res = supabase.table("Nota").insert(new_nota, upsert=True).execute() # eq("id", str(nota_id))
+    res = supabase.table("Nota").insert(nota, upsert=True).execute()
 
     status_code = res.get("status_code")
     if (status_code != 200) and (status_code != 201):
