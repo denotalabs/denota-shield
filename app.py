@@ -140,19 +140,18 @@ def initiate_recovery():
     nota = nota[0]
 
     proof_of_chargeback = request.json.get('proofOfChargeback')
-    old_nota = supabase.table("Nota").select("*").eq("id", str(nota_id)).execute()
-    old_nota = old_nota.get("data")[0]
+    new_nota = supabase.table("Nota").select("*").eq("id", str(nota_id)).execute()
+    new_nota = new_nota.get("data")[0]
+    new_nota["proof_of_chargeback"] = proof_of_chargeback
+    new_nota["recovery_status"] = 1
 
-    old_nota["proof_of_chargeback"] = proof_of_chargeback
-    old_nota["recovery_status"] = 1
+    res = supabase.table("Nota").insert(new_nota, upsert=True).execute() # eq("id", str(nota_id))
 
-    res = supabase.table("Nota").update(old_nota).eq("id", str(nota_id)).execute()
-    
     status_code = res.get("status_code")
     if (status_code != 200) and (status_code != 201):
         return jsonify({"error": status_code}), status_code
 
-    return jsonify({"message": "success"}), status_code # TODO What should this return?
+    return jsonify({"message": "success"}), status_code
 
 # Recovery status endpoint
 @app.route('/recovery/<int:nota_id>', methods=['GET'])
@@ -161,11 +160,16 @@ def get_recovery(nota_id):
     user = supabase.auth.api.get_user(request.headers.get('Authorization'))
     user_id = user["id"]
     
-    nota = supabase.table("Nota").select("*").eq("id", str(nota_id)).eq("user_id", user_id).execute()
-    if not nota:
+    notas = supabase.table("Nota").select("*").eq("id", str(nota_id)).eq("user_id", str(user_id)).execute() # Limit 1?
+    if notas is None:
         return jsonify({"error": "Doesn't exist or not authorized"}), 400
     
-    return jsonify({"status": nota.data[0]["recovery_status"]})
+    nota = notas.get("data")
+    if len(nota) > 1:
+        raise Exception("More than one nota was created")
+    nota = nota[0]
+    
+    return jsonify({"status": nota["recovery_status"]})
 
 
 if __name__ == "__main__":

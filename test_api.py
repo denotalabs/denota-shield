@@ -27,7 +27,7 @@ def client():
         yield client
 
 
-def test_register_onramp(client):
+def test_register_onramp(client): # TODO handle rate limiting
     rv = client.post('/register', json=test_data)
     assert rv.status_code in [200, 201, 409]
 
@@ -60,7 +60,7 @@ def test_initiate_recovery(client):
         "notaId": test_data["notaId"],
         "proofOfChargeback": test_data["proofOfChargeback"]
     }, headers={'Authorization': test_data["testToken"]})
-    assert rv.status_code == 200
+    assert rv.status_code == 200 or rv.status_code == 201
 
 
 def test_get_recovery(client):
