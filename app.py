@@ -1,3 +1,4 @@
+import json
 from functools import wraps
 
 import dotenv
@@ -6,15 +7,25 @@ from flask import Flask, jsonify, request
 from supabase_py import Client, create_client
 from web3 import Web3
 
+
+def load_abi(file_name):
+    with open(file_name, 'r') as abi_file:
+        return json.load(abi_file)
+
+
+registrarABI = load_abi("CheqRegistrar.json")
+coverageABI = load_abi("Coverage.json")
+
+
 env_path = ".env"
 url: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_URL')
 key: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_KEY')
 supabase: Client = create_client(url, key)
 
-INFURA_URL = 'https://polygon-mumbai-bor.publicnode.com/'
-w3 = Web3(Web3.HTTPProvider(INFURA_URL))
-registrar = w3.eth.contract(address="", abi={})
-coverage = w3.eth.contract(address="", abi={})
+RPC_URL = 'https://polygon-mumbai-bor.publicnode.com/'
+w3 = Web3(Web3.HTTPProvider(RPC_URL))
+registrar = w3.eth.contract(address="", abi=registrarABI)
+coverage = w3.eth.contract(address="", abi=coverageABI)
 
 
 app = Flask(__name__)
