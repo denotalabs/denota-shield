@@ -1,3 +1,4 @@
+import json
 import pytest
 from app import app  # Replace with the name of your API file.
 import dotenv
@@ -5,23 +6,20 @@ import dotenv
 env_path = ".env"
 testEmail = dotenv.get_key(dotenv_path=env_path, key_to_get='TEST_EMAIL')
 testPassword = dotenv.get_key(dotenv_path=env_path, key_to_get="TEST_PASSWORD")
-testToken = dotenv.get_key(dotenv_path=env_path, key_to_get="TEST_TOKEN")
 
 # The data used for testing the endpoints.
 test_data = {
     "email": testEmail,
     "password": testPassword,
+    "testToken": "",
     "onrampName": "test",
     "coverageTier": "silver",
     "historicalChargebackData": "",
     "paymentAmount": 200,
-    "paymentTime": "2023-09-24T14:39:22.752Z",
-    "withdrawalTime": "2023-09-25T14:39:22.752Z",
-    "notaId": 1,
-    "proofOfChargeback": "testproof"
+    "riskScore": 100,
+    "notaId": 0,
+    "proofOfChargeback": {}
 }
-
-# bearer_token = None # TODO how to pass this around to simulate sessions
 
 @pytest.fixture
 def client():
@@ -39,15 +37,21 @@ def test_onramp_signin(client):
         "email": test_data["email"],
         "password": test_data["password"]
     })
+    token = rv.data.decode("utf-8")
+    test_data["testToken"] = token
+    
     assert rv.status_code == 200 or rv.status_code == 201
 
 
 def test_add_nota(client):
     rv = client.post('/nota', json={
         "paymentAmount": test_data["paymentAmount"],
-        "paymentTime": test_data["paymentTime"],
-        "withdrawalTime": test_data["withdrawalTime"]
-    }, headers={'Authorization': testToken})
+        "riskScore": test_data["riskScore"]
+    }, headers={'Authorization': test_data["testToken"]})
+
+    nota_id = json.loads(rv.data.decode("utf-8"))["notaId"]
+    test_data["notaId"] = nota_id
+
     assert rv.status_code == 201
 
 
@@ -55,7 +59,7 @@ def test_initiate_recovery(client):
     rv = client.post('/recovery', json={
         "notaId": test_data["notaId"],
         "proofOfChargeback": test_data["proofOfChargeback"]
-    }, headers={'Authorization': testToken})
+    }, headers={'Authorization': test_data["testToken"]})
     assert rv.status_code == 200
 
 

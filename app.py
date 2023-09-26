@@ -85,16 +85,40 @@ def onramp_signin():
 @app.route('/nota', methods=['POST'])
 @token_required
 def add_nota():
+    res = supabase.auth.api.get_user(request.headers.get('Authorization')) # TODO This is a duplicated call for now (decorator and here)
+    
+    user_id = res.get("id")
     payment_amount = request.json.get('paymentAmount')
-    payment_time = request.json.get('paymentTime')
-    withdrawal_time = request.json.get('withdrawalTime')
+    risk_score = request.json.get('riskScore')
+    
+    # Ensure the required parameters are provided
+    if not all([user_id, payment_amount, risk_score]):
+        return jsonify({"error": "Required parameters missing!"}), 400
+    
+    # TODO: Mint nota NFT using web3 wallet
+    
+    nota_data = {
+        "user_id": user_id,
+        "payment_amount": payment_amount,
+        "risk_score": risk_score,
+        "recovery_status": 0 # 0 = not initiated, 1 = pending, 2 = completed
+    }
+    
+    res = supabase.table("Nota").insert(nota_data).execute() # Sanitize input (don't allow duplicate minting, etc.)
+    status_code = res.get("status_code")
+    if (status_code != 200) and (status_code != 201):
+        return jsonify({"error": status_code}), status_code
+    
+    notas = res.get("data")
+    if len(notas) > 1:
+        raise Exception("More than one nota was created")
+    
+    nota_id = notas[0].get("id")
+    if nota_id is None:
+        return jsonify({"error": "Failed to create nota"}), 400
 
-    # TODO: Mint nota NFT
+    return jsonify({"notaId": nota_id}), status_code #response.data["id"]
 
-    # For now, returning a stubbed response
-    return jsonify({
-        "notaId": "stubbed_nota_id"
-    })
 
 # Recovery endpoint
 @app.route('/recovery', methods=['POST'])
