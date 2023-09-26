@@ -64,5 +64,5 @@ def test_initiate_recovery(client):
 
 
 def test_get_recovery(client):
-    rv = client.get(f'/recovery/{test_data["notaId"]}', headers={'Authorization': testToken})
+    rv = client.get(f'/recovery/{test_data["notaId"]}', headers={'Authorization': test_data["testToken"]})
     assert rv.status_code == 200
