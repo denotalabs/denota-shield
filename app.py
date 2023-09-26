@@ -161,7 +161,7 @@ def add_nota():
 def mint_onchain_nota(key, address, payment_amount, risk_score):
     risk_fee = (payment_amount/10000)*risk_score
     payload = w3.eth.encodeABI(
-        ["address", "uint256", "unit256"], ["", 1000, 50])
+        ["address", "uint256", "unit256"], [address, 1000, 50])
     transaction = registrar.functions.mint("token", 0, risk_fee, "coverageModule", "coverageModule", payload).buildTransaction({
         'chainId': 80001,  # For mainnet
         'gas': 2000000,  # Estimated gas, change accordingly
