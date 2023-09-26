@@ -11,7 +11,7 @@ url: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_URL')
 key: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_KEY')
 supabase: Client = create_client(url, key)
 
-INFURA_URL = 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID'
+INFURA_URL = 'https://polygon-mumbai-bor.publicnode.com/'
 w3 = Web3(Web3.HTTPProvider(INFURA_URL))
 registrar = w3.eth.contract(address="", abi={})
 coverage = w3.eth.contract(address="", abi={})
@@ -20,6 +20,10 @@ coverage = w3.eth.contract(address="", abi={})
 app = Flask(__name__)
 
 # Onboarding endpoint
+
+
+def private_key_to_address(private_key: str):
+    return Web3.toChecksumAddress(Web3.eth.account.privateKeyToAccount(private_key).address)
 
 
 @app.route('/register', methods=['POST'])
@@ -116,7 +120,8 @@ def add_nota():
 
     # Mint nota NFT using web3 wallet
     private_key = res.get("private_key")
-    mint_onchain_nota(private_key, "", payment_amount, risk_score)
+    mint_onchain_nota(private_key, private_key_to_address(
+        private_key), payment_amount, risk_score)
 
     nota_data = {
         "user_id": user_id,
@@ -175,7 +180,8 @@ def initiate_recovery():
     nota_id = request.json.get('notaId')
 
     # Initiate recovery onchain
-    tx_hash = initiate_onchain_recovery(private_key, "", nota_id)
+    tx_hash = initiate_onchain_recovery(
+        private_key, private_key_to_address(private_key), nota_id)
 
     notas = supabase.table("Nota").select(
         "*").eq("id", str(nota_id)).eq("user_id", str(user_id)).execute()  # Limit 1?
