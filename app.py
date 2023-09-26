@@ -40,7 +40,11 @@ def register_onramp():
         "coverage_tier": coverage_tier,
         "historical_chargeback_data": historical_chargeback_data
     }
-    response = supabase.table("User").insert(user_data).execute() # TODO ensure that this succeeds before continuing
+
+    res = supabase.table("User").insert(user_data).execute()
+    status_code = res.get("status_code")
+    if (status_code != 200) and (status_code != 201):
+        return jsonify({"error": status_code}), status_code
 
     return f"Registration successful: {status_code}", status_code
 
