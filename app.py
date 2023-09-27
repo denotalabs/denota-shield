@@ -57,6 +57,13 @@ def private_key_to_address(private_key: str):
     return Web3.toChecksumAddress(Web3.eth.account.privateKeyToAccount(private_key).address)
 
 
+def send_transaction(tx, key):
+    signed_tx = w3.eth.account.sign_transaction(tx, key)
+    txn_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+    receipt = w3.eth.wait_for_transaction_receipt(txn_hash)
+    return receipt
+
+
 @app.route('/register', methods=['POST'])
 def register_onramp():
     onramp_email = request.json.get('email')
@@ -102,37 +109,32 @@ def register_onramp():
 def setup_new_account():
     # Create a new account
     new_account = w3.eth.account.create()
-    nonce = w3.eth.getTransactionCount(
-        Web3.toChecksumAddress(master_private_key))
+    nonce = w3.eth.get_transaction_count(
+        Web3.to_checksum_address(master_private_key))
 
     # Send 0.01 Matic from master account to the new account
     tx = {
         'to': new_account.address,
-        'value': Web3.toWei(0.01, 'ether'),
+        'value': Web3.to_wei(0.01, 'ether'),
         'gas': 400000,
-        'gasPrice': w3.toWei('200', 'gwei'),
+        'gasPrice': w3.to_wei('200', 'gwei'),
         'nonce': nonce,
     }
-    signed_tx = w3.eth.account.signTransaction(tx, master_private_key)
-    txn_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
-    w3.eth.waitForTransactionReceipt(txn_hash)
+    send_transaction(tx, master_private_key)
 
     # Approve infinite spending on USDC token for the registrar contract
-    infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).buildTransaction({
+    infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).build_transaction({
         'chainId': 80001,  # For Matic Mainnet
         'gas': 400000,
-        'gasPrice': w3.toWei('200', 'gwei'),
-        'nonce': w3.eth.getTransactionCount(new_account.address),
+        'gasPrice': w3.to_wei('200', 'gwei'),
+        'nonce': w3.eth.get_transaction_count(new_account.address),
         'from': new_account.address
     })
-    signed_approval_tx = w3.eth.account.signTransaction(
-        infinite_approval_tx, new_account.privateKey)
-    txn_hash = w3.eth.sendRawTransaction(signed_approval_tx.rawTransaction)
-    w3.eth.waitForTransactionReceipt(txn_hash)
+    send_transaction(infinite_approval_tx, master_private_key)
 
     # TODO: send USDC to address
 
-    return new_account.privateKey.hex()
+    return new_account.private_key.hex()
 
 
 def token_required(f):
@@ -142,7 +144,7 @@ def token_required(f):
         if not token:
             return jsonify({"error": "Token is missing!"}), 401
 
-        response = supabase.auth.api.get_user(token)
+        response = supabase.auth.get_user(token)
         if 'error' in response:
             return jsonify({"error": "Invalid or expired token!"}), 401
 
@@ -176,7 +178,7 @@ def onramp_signin():
 @token_required
 def add_nota():
     # TODO This is a duplicated call for now (decorator and here)
-    res = supabase.auth.api.get_user(request.headers.get('Authorization'))
+    res = supabase.auth.get_user(request.headers.get('Authorization'))
 
     user_id = res.get("id")
     payment_amount = request.json.get('paymentAmount')
@@ -225,16 +227,10 @@ def mint_onchain_nota(key, address, payment_amount, risk_score):
         'gasPrice': w3.toWei('200', 'gwei'),
         'nonce': w3.eth.getTransactionCount(address)
     })
-    # Sign the transaction
-    signed_txn = w3.eth.account.signTransaction(transaction, key)
+    receipt = send_transaction(transaction, key)
+    nota_id = nota_id_from_log(receipt)
 
-    # Send the transaction
-    txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
-
-    # Wait for the transaction receipt
-    receipt = w3.eth.waitForTransactionReceipt(txn_hash)
-
-    return receipt['transactionHash'].hex()
+    return receipt['transactionHash'].hex(), nota_id
 
 
 def nota_id_from_log(receipt):
@@ -264,7 +260,7 @@ def nota_id_from_log(receipt):
 @app.route('/recovery', methods=['POST'])
 @token_required
 def initiate_recovery():
-    user = supabase.auth.api.get_user(request.headers.get('Authorization'))
+    user = supabase.auth.get_user(request.headers.get('Authorization'))
 
     user_id = user["id"]
     private_key = user["private_key"]
@@ -305,14 +301,7 @@ def initiate_onchain_recovery(key, address, nota_id):
         'gasPrice': w3.toWei('200', 'gwei'),
         'nonce': w3.eth.getTransactionCount(address)
     })
-    # Sign the transaction
-    signed_txn = w3.eth.account.signTransaction(transaction, key)
-
-    # Send the transaction
-    txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
-
-    # Wait for the transaction receipt
-    receipt = w3.eth.waitForTransactionReceipt(txn_hash)
+    receipt = send_transaction(transaction, key)
 
     return receipt['transactionHash'].hex()
 
@@ -322,7 +311,7 @@ def initiate_onchain_recovery(key, address, nota_id):
 @app.route('/recovery/<int:nota_id>', methods=['GET'])
 @token_required
 def get_recovery(nota_id):
-    user = supabase.auth.api.get_user(request.headers.get('Authorization'))
+    user = supabase.auth.get_user(request.headers.get('Authorization'))
     user_id = user["id"]
 
     notas = supabase.table("Nota").select(
