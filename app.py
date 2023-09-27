@@ -24,8 +24,10 @@ supabase: Client = create_client(url, key)
 
 RPC_URL = 'https://polygon-mumbai-bor.publicnode.com/'
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
-registrar = w3.eth.contract(address="", abi=registrarABI)
-coverage = w3.eth.contract(address="", abi=coverageABI)
+registrar = w3.eth.contract(
+    address="0x50d535af78A154a493d6ed466B363DDeBE4Ee88f", abi=registrarABI)
+coverage = w3.eth.contract(
+    address="0xE8958F60bf2e3fa00be499b3E1cBcd52fBf389b6", abi=coverageABI)
 
 
 app = Flask(__name__)
@@ -60,6 +62,8 @@ def register_onramp():
     # generate user's web3 wallet then save it to the database
     new_account = Account.create()
     private_key = new_account.privateKey.hex()
+
+    # TODO: handle funding, approvals, etc
 
     # add to user table
     user_data = {
