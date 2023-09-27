@@ -2,9 +2,8 @@ import json
 from functools import wraps
 
 import dotenv
-from eth_account import Account
 from flask import Flask, jsonify, request
-from supabase_py import Client, create_client
+from supabase import Client, create_client
 from web3 import Web3
 
 
@@ -13,14 +12,14 @@ def load_abi(file_name):
         return json.load(abi_file)
 
 
-registrarABI = load_abi("CheqRegistrar.json")
-coverageABI = load_abi("Coverage.json")
+registrarABI = load_abi("CheqRegistrar.json")['abi']
+coverageABI = load_abi("Coverage.json")['abi']
 
 
 env_path = ".env"
 url: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_URL')
 key: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_KEY')
-master_priavte_key: str = dotenv.get_key(
+master_private_key: str = dotenv.get_key(
     dotenv_path=env_path, key_to_get='PRIVATE_KEY')
 supabase: Client = create_client(url, key)
 
@@ -30,10 +29,6 @@ USDC_TOKEN_ADDRESS = '0xc5B6c09dc6595Eb949739f7Cd6A8d542C2aabF4b'
 
 RPC_URL = 'https://polygon-mumbai-bor.publicnode.com/'
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
-registrar = w3.eth.contract(
-    address=REGISTRAR_CONTRACT_ADDRESS, abi=registrarABI['abi'])
-coverage = w3.eth.contract(
-    address=COVERAGE_CONTRACT_ADDRESS, abi=coverageABI['abi'])
 
 approve_abi = [{
     "constant": False,
@@ -45,6 +40,13 @@ approve_abi = [{
     "outputs": [{"name": "", "type": "bool"}],
     "type": "function"
 }]
+
+registrar = w3.eth.contract(
+    address=REGISTRAR_CONTRACT_ADDRESS, abi=registrarABI)
+coverage = w3.eth.contract(
+    address=COVERAGE_CONTRACT_ADDRESS, abi=coverageABI)
+usdc_contract = w3.eth.contract(
+    address=USDC_TOKEN_ADDRESS, abi=approve_abi)
 
 app = Flask(__name__)
 
@@ -100,26 +102,26 @@ def register_onramp():
 def setup_new_account():
     # Create a new account
     new_account = w3.eth.account.create()
+    nonce = w3.eth.getTransactionCount(
+        Web3.toChecksumAddress(master_private_key))
 
     # Send 0.01 Matic from master account to the new account
     tx = {
         'to': new_account.address,
         'value': Web3.toWei(0.01, 'ether'),
-        'gas': 21000,
-        'gasPrice': w3.toWei('20', 'gwei'),
-        'nonce': w3.eth.getTransactionCount(Web3.toChecksumAddress(master_priavte_key)),
+        'gas': 400000,
+        'gasPrice': w3.toWei('200', 'gwei'),
+        'nonce': nonce,
     }
-    signed_tx = w3.eth.account.signTransaction(tx, master_priavte_key)
+    signed_tx = w3.eth.account.signTransaction(tx, master_private_key)
     txn_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
     w3.eth.waitForTransactionReceipt(txn_hash)
 
     # Approve infinite spending on USDC token for the registrar contract
-    usdc_contract = w3.eth.contract(
-        address=USDC_TOKEN_ADDRESS, abi=approve_abi)
     infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).buildTransaction({
         'chainId': 80001,  # For Matic Mainnet
-        'gas': 2000000,
-        'gasPrice': w3.toWei('20', 'gwei'),
+        'gas': 400000,
+        'gasPrice': w3.toWei('200', 'gwei'),
         'nonce': w3.eth.getTransactionCount(new_account.address),
         'from': new_account.address
     })
@@ -215,9 +217,9 @@ def mint_onchain_nota(key, address, payment_amount, risk_score):
     risk_fee = (payment_amount/10000)*risk_score
     payload = w3.eth.encodeABI(
         ["address", "uint256", "unit256"], [address, 1000, 50])
-    transaction = registrar.functions.mint("token", 0, risk_fee, "coverageModule", "coverageModule", payload).buildTransaction({
+    transaction = registrar.functions.mint(USDC_TOKEN_ADDRESS, 0, risk_fee, "coverageModule", "coverageModule", payload).buildTransaction({
         'chainId': 80001,  # For mainnet
-        'gas': 2000000,  # Estimated gas, change accordingly
+        'gas': 400000,  # Estimated gas, change accordingly
         'gasPrice': w3.toWei('200', 'gwei'),
         'nonce': w3.eth.getTransactionCount(address)
     })
@@ -274,7 +276,7 @@ def initiate_recovery():
 def initiate_onchain_recovery(key, address, nota_id):
     transaction = coverage.functions.recoverFunds(nota_id).buildTransaction({
         'chainId': 80001,  # For mainnet
-        'gas': 2000000,  # Estimated gas, change accordingly
+        'gas': 400000,  # Estimated gas, change accordingly
         'gasPrice': w3.toWei('200', 'gwei'),
         'nonce': w3.eth.getTransactionCount(address)
     })
