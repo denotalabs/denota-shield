@@ -31,23 +31,35 @@ USDC_TOKEN_ADDRESS = '0xc5B6c09dc6595Eb949739f7Cd6A8d542C2aabF4b'
 RPC_URL = 'https://polygon-mumbai-bor.publicnode.com/'
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 
-approve_abi = [{
-    "constant": False,
-    "inputs": [
-        {"name": "_spender", "type": "address"},
-        {"name": "_value", "type": "uint256"}
-    ],
-    "name": "approve",
-    "outputs": [{"name": "", "type": "bool"}],
-    "type": "function"
-}]
+erc20_abi = [
+    {
+        "constant": False,
+        "inputs": [
+            {"name": "_spender", "type": "address"},
+            {"name": "_value", "type": "uint256"}
+        ],
+        "name": "approve",
+        "outputs": [{"name": "", "type": "bool"}],
+        "type": "function"
+    },
+    {
+        "constant": False,
+        "inputs": [
+            {"name": "_to", "type": "address"},
+            {"name": "_value", "type": "uint256"}
+        ],
+        "name": "transfer",
+        "outputs": [{"name": "", "type": "bool"}],
+        "type": "function"
+    }
+]
 
 registrar = w3.eth.contract(
     address=REGISTRAR_CONTRACT_ADDRESS, abi=registrarABI)
 coverage = w3.eth.contract(
     address=COVERAGE_CONTRACT_ADDRESS, abi=coverageABI)
 usdc_contract = w3.eth.contract(
-    address=USDC_TOKEN_ADDRESS, abi=approve_abi)
+    address=USDC_TOKEN_ADDRESS, abi=erc20_abi)
 
 app = Flask(__name__)
 
@@ -123,6 +135,17 @@ def setup_new_account():
         'nonce': nonce,
     }
     send_transaction(tx, master_private_key)
+
+    master_address = private_key_to_address(master_private_key)
+
+    transfer_tx = usdc_contract.functions.transfer(new_account.address, 1000).build_transaction({
+        'chainId': 137,  # For Matic Mainnet
+        'gas': 2000000,
+        'gasPrice': w3.to_wei('200', 'gwei'),
+        'nonce': w3.eth.get_transaction_count(master_address),
+        'from': master_address
+    })
+    send_transaction(transfer_tx, master_private_key)
 
     # Approve infinite spending on USDC token for the registrar contract
     infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).build_transaction({
