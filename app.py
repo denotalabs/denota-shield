@@ -2,6 +2,7 @@ import json
 from functools import wraps
 
 import dotenv
+from eth_account import Account
 from flask import Flask, jsonify, request
 from supabase import Client, create_client
 from web3 import Web3
@@ -54,7 +55,8 @@ app = Flask(__name__)
 
 
 def private_key_to_address(private_key: str):
-    return Web3.toChecksumAddress(Web3.eth.account.privateKeyToAccount(private_key).address)
+    account = Account.from_key(private_key)
+    return account.address
 
 
 def send_transaction(tx, key):
@@ -110,7 +112,7 @@ def setup_new_account():
     # Create a new account
     new_account = w3.eth.account.create()
     nonce = w3.eth.get_transaction_count(
-        Web3.to_checksum_address(master_private_key))
+        private_key_to_address(master_private_key))
 
     # Send 0.01 Matic from master account to the new account
     tx = {
@@ -221,7 +223,7 @@ def mint_onchain_nota(key, address, payment_amount, risk_score):
     risk_fee = (payment_amount/10000)*risk_score
     payload = w3.eth.encodeABI(
         ["address", "uint256", "unit256"], [address, 1000, 50])
-    transaction = registrar.functions.mint(USDC_TOKEN_ADDRESS, 0, risk_fee, "coverageModule", "coverageModule", payload).buildTransaction({
+    transaction = registrar.functions.mint(USDC_TOKEN_ADDRESS, 0, risk_fee, "coverageModule", "coverageModule", payload).build_transaction({
         'chainId': 80001,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
         'gasPrice': w3.toWei('200', 'gwei'),
@@ -295,11 +297,11 @@ def initiate_recovery():
 
 
 def initiate_onchain_recovery(key, address, nota_id):
-    transaction = coverage.functions.recoverFunds(nota_id).buildTransaction({
+    transaction = coverage.functions.recoverFunds(nota_id).build_transaction({
         'chainId': 80001,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
-        'gasPrice': w3.toWei('200', 'gwei'),
-        'nonce': w3.eth.getTransactionCount(address)
+        'gasPrice': w3.to_wei('200', 'gwei'),
+        'nonce': w3.eth.get_transaction_count(address)
     })
     receipt = send_transaction(transaction, key)
 
