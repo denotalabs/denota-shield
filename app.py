@@ -20,15 +20,31 @@ coverageABI = load_abi("Coverage.json")
 env_path = ".env"
 url: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_URL')
 key: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_KEY')
+master_priavte_key: str = dotenv.get_key(
+    dotenv_path=env_path, key_to_get='PRIVATE_KEY')
 supabase: Client = create_client(url, key)
+
+COVERAGE_CONTRACT_ADDRESS = '0xE8958F60bf2e3fa00be499b3E1cBcd52fBf389b6'
+REGISTRAR_CONTRACT_ADDRESS = '0x50d535af78A154a493d6ed466B363DDeBE4Ee88f'
+USDC_TOKEN_ADDRESS = '0xc5B6c09dc6595Eb949739f7Cd6A8d542C2aabF4b'
 
 RPC_URL = 'https://polygon-mumbai-bor.publicnode.com/'
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 registrar = w3.eth.contract(
-    address="0x50d535af78A154a493d6ed466B363DDeBE4Ee88f", abi=registrarABI)
+    address=REGISTRAR_CONTRACT_ADDRESS, abi=registrarABI['abi'])
 coverage = w3.eth.contract(
-    address="0xE8958F60bf2e3fa00be499b3E1cBcd52fBf389b6", abi=coverageABI)
+    address=COVERAGE_CONTRACT_ADDRESS, abi=coverageABI['abi'])
 
+approve_abi = [{
+    "constant": False,
+    "inputs": [
+        {"name": "_spender", "type": "address"},
+        {"name": "_value", "type": "uint256"}
+    ],
+    "name": "approve",
+    "outputs": [{"name": "", "type": "bool"}],
+    "type": "function"
+}]
 
 app = Flask(__name__)
 
@@ -60,8 +76,7 @@ def register_onramp():
         return jsonify({"error": status_code}), status_code
 
     # generate user's web3 wallet then save it to the database
-    new_account = Account.create()
-    private_key = new_account.privateKey.hex()
+    private_key = setup_new_account()
 
     # TODO: handle funding, approvals, etc
 
@@ -80,6 +95,40 @@ def register_onramp():
         return jsonify({"error": status_code}), status_code
 
     return f"Registration successful: {status_code}", status_code
+
+
+def setup_new_account():
+    # Create a new account
+    new_account = w3.eth.account.create()
+
+    # Send 0.01 Matic from master account to the new account
+    tx = {
+        'to': new_account.address,
+        'value': Web3.toWei(0.01, 'ether'),
+        'gas': 21000,
+        'gasPrice': w3.toWei('20', 'gwei'),
+        'nonce': w3.eth.getTransactionCount(Web3.toChecksumAddress(master_priavte_key)),
+    }
+    signed_tx = w3.eth.account.signTransaction(tx, master_priavte_key)
+    txn_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+    w3.eth.waitForTransactionReceipt(txn_hash)
+
+    # Approve infinite spending on USDC token for the registrar contract
+    usdc_contract = w3.eth.contract(
+        address=USDC_TOKEN_ADDRESS, abi=approve_abi)
+    infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).buildTransaction({
+        'chainId': 80001,  # For Matic Mainnet
+        'gas': 2000000,
+        'gasPrice': w3.toWei('20', 'gwei'),
+        'nonce': w3.eth.getTransactionCount(new_account.address),
+        'from': new_account.address
+    })
+    signed_approval_tx = w3.eth.account.signTransaction(
+        infinite_approval_tx, new_account.privateKey)
+    txn_hash = w3.eth.sendRawTransaction(signed_approval_tx.rawTransaction)
+    w3.eth.waitForTransactionReceipt(txn_hash)
+
+    return new_account.privateKey.hex()
 
 
 def token_required(f):
