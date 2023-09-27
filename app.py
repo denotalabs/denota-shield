@@ -14,7 +14,7 @@ def load_abi(file_name):
 
 registrarABI = load_abi("CheqRegistrar.json")['abi']
 coverageABI = load_abi("Coverage.json")['abi']
-
+eventsABI = load_abi("Events.json")['abi']
 
 env_path = ".env"
 url: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_URL')
@@ -130,6 +130,8 @@ def setup_new_account():
     txn_hash = w3.eth.sendRawTransaction(signed_approval_tx.rawTransaction)
     w3.eth.waitForTransactionReceipt(txn_hash)
 
+    # TODO: send USDC to address
+
     return new_account.privateKey.hex()
 
 
@@ -235,7 +237,30 @@ def mint_onchain_nota(key, address, payment_amount, risk_score):
     return receipt['transactionHash'].hex()
 
 
+def nota_id_from_log(receipt):
+    # Create a contract "object" only for parsing logs (no address needed as we're not interacting with the contract itself)
+    contract = w3.eth.contract(abi=eventsABI)
+
+    # Parse logs
+    parsed_logs = []
+    for log in receipt['logs']:
+        try:
+            parsed_log = contract.events.Written().process_log(log)
+            parsed_logs.append(parsed_log)
+        except:
+            pass
+
+    # Filter logs for event with the name "Written"
+    written_logs = [log for log in parsed_logs if log['event'] == 'Written']
+
+    # Assuming the desired ID is the second argument of the "Written" event
+    id = written_logs[0]['args'][1] if written_logs else None
+
+    return str(id) if id else None
+
 # Recovery endpoint
+
+
 @app.route('/recovery', methods=['POST'])
 @token_required
 def initiate_recovery():
