@@ -91,7 +91,7 @@ def register_onramp():
         return jsonify({"error": "Required fields are missing"}), 400
 
     # This returns a dict with the user's id
-    res = supabase.auth.sign_up(onramp_email, password)
+    res = supabase.auth.sign_up({"email": onramp_email, "password": password})
     if res is None:
         return jsonify({"error": "User already exists"}), 400
     status_code = res.get("status_code")
