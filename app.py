@@ -101,8 +101,6 @@ def register_onramp():
     # generate user's web3 wallet then save it to the database
     private_key = setup_new_account()
 
-    # TODO: handle funding, approvals, etc
-
     # add to user table
     user_data = {
         "id": res.get("id"),
@@ -138,8 +136,9 @@ def setup_new_account():
 
     master_address = private_key_to_address(master_private_key)
 
+    # Send USDC to address
     transfer_tx = usdc_contract.functions.transfer(new_account.address, 1000).build_transaction({
-        'chainId': 137,  # For Matic Mainnet
+        'chainId': 80001,
         'gas': 2000000,
         'gasPrice': w3.to_wei('200', 'gwei'),
         'nonce': w3.eth.get_transaction_count(master_address),
@@ -149,15 +148,13 @@ def setup_new_account():
 
     # Approve infinite spending on USDC token for the registrar contract
     infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).build_transaction({
-        'chainId': 80001,  # For Matic Mainnet
+        'chainId': 80001,
         'gas': 400000,
         'gasPrice': w3.to_wei('200', 'gwei'),
         'nonce': w3.eth.get_transaction_count(new_account.address),
         'from': new_account.address
     })
     send_transaction(infinite_approval_tx, master_private_key)
-
-    # TODO: send USDC to address
 
     return new_account.private_key.hex()
 
