@@ -92,18 +92,19 @@ def register_onramp():
 
     # This returns a dict with the user's id
     res = supabase.auth.sign_up({"email": onramp_email, "password": password})
+
     if res is None:
         return jsonify({"error": "User already exists"}), 400
-    status_code = res.get("status_code")
-    if (status_code != 200) and (status_code != 201):
-        return jsonify({"error": status_code}), status_code
+
+    if not res.user:
+        return jsonify({"error": 500}), 500
 
     # generate user's web3 wallet then save it to the database
     private_key = setup_new_account()
 
     # add to user table
     user_data = {
-        "id": res.get("id"),
+        "id": res.user.id,
         "name": onramp_name,
         "coverage_tier": coverage_tier,
         "historical_chargeback_data": historical_chargeback_data,
@@ -111,11 +112,11 @@ def register_onramp():
     }
 
     res = supabase.table("User").insert(user_data).execute()
-    status_code = res.get("status_code")
-    if (status_code != 200) and (status_code != 201):
-        return jsonify({"error": status_code}), status_code
 
-    return f"Registration successful: {status_code}", status_code
+    if not res.data:
+        return jsonify({"error": 500}), 500
+
+    return f"Registration successful: 200", 200
 
 
 def setup_new_account():
@@ -156,7 +157,7 @@ def setup_new_account():
     })
     send_transaction(infinite_approval_tx, master_private_key)
 
-    return new_account.private_key.hex()
+    return new_account.key.hex()
 
 
 def token_required(f):
