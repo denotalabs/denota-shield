@@ -141,12 +141,14 @@ def setup_new_account():
     # Send USDC to address
     transfer_tx = usdc_contract.functions.transfer(new_account.address, 1000).build_transaction({
         'chainId': 80001,
-        'gas': 2000000,
+        'gas': 400000,
         'gasPrice': w3.to_wei('200', 'gwei'),
         'nonce': w3.eth.get_transaction_count(master_address),
         'from': master_address
     })
     send_transaction(transfer_tx, master_private_key)
+
+    new_account_key = new_account.key.hex()
 
     # Approve infinite spending on USDC token for the registrar contract
     infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).build_transaction({
@@ -156,9 +158,9 @@ def setup_new_account():
         'nonce': w3.eth.get_transaction_count(new_account.address),
         'from': new_account.address
     })
-    send_transaction(infinite_approval_tx, master_private_key)
+    send_transaction(infinite_approval_tx, new_account_key)
 
-    return new_account.key.hex()
+    return new_account_key
 
 
 def token_required(f):
