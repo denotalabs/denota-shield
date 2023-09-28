@@ -235,7 +235,6 @@ def add_nota():
 
     # Sanitize input (don't allow duplicate minting, etc.)
     res = supabase.table("Nota").insert(nota_data).execute()
-    status_code = res
     if not res.data:
         return jsonify({"error": 500}), 500
 
@@ -247,7 +246,7 @@ def add_nota():
     if nota_id is None:
         return jsonify({"error": "Failed to create nota"}), 400
 
-    return jsonify({"notaId": nota_id}), status_code  # response.data["id"]
+    return jsonify({"notaId": nota_id}), 200  # response.data["id"]
 
 
 def mint_onchain_nota(key, address, payment_amount, risk_score):
