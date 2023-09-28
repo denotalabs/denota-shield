@@ -80,6 +80,8 @@ def send_transaction(tx, key):
 
 @app.route('/register', methods=['POST'])
 def register_onramp():
+    # TODO: require an invite code to register
+
     onramp_email = request.json.get('email')
     password = request.json.get('password')
     onramp_name = request.json.get('onrampName')
@@ -129,7 +131,7 @@ def setup_new_account():
     tx = {
         'chainId': 80001,
         'to': new_account.address,
-        'value': Web3.to_wei(0.01, 'ether'),
+        'value': Web3.to_wei(0.05, 'ether'),
         'gas': 400000,
         'gasPrice': w3.to_wei('200', 'gwei'),
         'nonce': nonce,
@@ -154,7 +156,7 @@ def setup_new_account():
     infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).build_transaction({
         'chainId': 80001,
         'gas': 400000,
-        'gasPrice': w3.to_wei('200', 'gwei'),
+        'gasPrice': w3.to_wei('100', 'gwei'),
         'nonce': w3.eth.get_transaction_count(new_account.address),
         'from': new_account.address
     })
@@ -251,7 +253,7 @@ def mint_onchain_nota(key, address, payment_amount, risk_score):
     transaction = registrar.functions.mint(USDC_TOKEN_ADDRESS, 0, risk_fee, "coverageModule", "coverageModule", payload).build_transaction({
         'chainId': 80001,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
-        'gasPrice': w3.toWei('200', 'gwei'),
+        'gasPrice': w3.toWei('100', 'gwei'),
         'nonce': w3.eth.getTransactionCount(address)
     })
     receipt = send_transaction(transaction, key)
