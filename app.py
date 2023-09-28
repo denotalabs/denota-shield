@@ -260,7 +260,7 @@ def mint_onchain_nota(key, address, payment_amount, risk_score):
 
     payload = encode(["address", "uint256", "uint256"], [
                      address, payment_amount_wei, risk_score])
-    transaction = registrar.functions.mint(USDC_TOKEN_ADDRESS, 0, risk_fee_wei, COVERAGE_CONTRACT_ADDRESS, COVERAGE_CONTRACT_ADDRESS, payload).build_transaction({
+    transaction = registrar.functions.write(USDC_TOKEN_ADDRESS, 0, risk_fee_wei, COVERAGE_CONTRACT_ADDRESS, COVERAGE_CONTRACT_ADDRESS, payload).build_transaction({
         'chainId': 80001,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
         'gasPrice': w3.toWei('100', 'gwei'),
