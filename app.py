@@ -227,8 +227,11 @@ def add_nota():
     # Mint nota NFT using web3 wallet
     private_key = user["private_key"]
     address = private_key_to_address(private_key)
-    onchain_id = mint_onchain_nota(
+    _, onchain_id = mint_onchain_nota(
         private_key, address, payment_amount, risk_score)
+
+    if onchain_id is None:
+        raise Exception("Nota creation failed")
 
     nota_data = {
         "user_id": user_id,
@@ -288,8 +291,7 @@ def nota_id_from_log(receipt):
     # Filter logs for event with the name "Written"
     written_logs = [log for log in parsed_logs if log['event'] == 'Written']
 
-    # Assuming the desired ID is the second argument of the "Written" event
-    id = written_logs[0]['args'][1] if written_logs else None
+    id = written_logs[0]['args']['cheqId'] if written_logs else None
 
     return str(id) if id else None
 
