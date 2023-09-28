@@ -14,6 +14,11 @@ def load_abi(file_name):
         return json.load(abi_file)
 
 
+def private_key_to_address(private_key: str):
+    account = Account.from_key(private_key)
+    return account.address
+
+
 registrarABI = load_abi("CheqRegistrar.json")['abi']
 coverageABI = load_abi("Coverage.json")['abi']
 eventsABI = load_abi("Events.json")['abi']
@@ -23,6 +28,9 @@ url: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_URL')
 key: str = dotenv.get_key(dotenv_path=env_path, key_to_get='SUPABASE_KEY')
 master_private_key: str = dotenv.get_key(
     dotenv_path=env_path, key_to_get='PRIVATE_KEY')
+
+master_address = private_key_to_address(master_private_key)
+
 supabase: Client = create_client(url, key)
 
 COVERAGE_CONTRACT_ADDRESS = '0xE8958F60bf2e3fa00be499b3E1cBcd52fBf389b6'
@@ -65,11 +73,6 @@ usdc_contract = w3.eth.contract(
 app = Flask(__name__)
 
 # Onboarding endpoint
-
-
-def private_key_to_address(private_key: str):
-    account = Account.from_key(private_key)
-    return account.address
 
 
 def send_transaction(tx, key):
@@ -138,8 +141,6 @@ def setup_new_account():
         'nonce': nonce,
     }
     send_transaction(tx, master_private_key)
-
-    master_address = private_key_to_address(master_private_key)
 
     amount_wei = w3.to_wei(1000, 'ether')
     # Send USDC to address
@@ -225,8 +226,9 @@ def add_nota():
 
     # Mint nota NFT using web3 wallet
     private_key = user["private_key"]
-    onchain_id = mint_onchain_nota(private_key, private_key_to_address(
-        private_key), payment_amount, risk_score)
+    address = private_key_to_address(private_key)
+    onchain_id = mint_onchain_nota(
+        private_key, address, payment_amount, risk_score)
 
     nota_data = {
         "user_id": user_id,
