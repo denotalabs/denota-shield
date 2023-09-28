@@ -192,13 +192,13 @@ def onramp_signin():
         return jsonify({"error": "Required fields are missing"}), 400
 
     # This returns a dict with the user's id
-    session = supabase.auth.sign_in_with_password(
+    res = supabase.auth.sign_in_with_password(
         {"email": onramp_email, "password": password})
-    status_code = session.get("status_code")
-    if (status_code != 200) and (status_code != 201):
-        return jsonify({"error": status_code}), status_code
 
-    return session.get("access_token"), status_code
+    if not res.session:
+        return jsonify({"error": 500}), 500
+
+    return res.session.access_token, 200
 
 # Transactions endpoint
 
@@ -209,7 +209,7 @@ def add_nota():
     # TODO This is a duplicated call for now (decorator and here)
     res = supabase.auth.get_user(request.headers.get('Authorization'))
 
-    user_id = res.get("id")
+    user_id = res.user.id
     payment_amount = request.json.get('paymentAmount')
     risk_score = request.json.get('riskScore')
 
@@ -217,8 +217,12 @@ def add_nota():
     if not all([user_id, payment_amount, risk_score]):
         return jsonify({"error": "Required parameters missing!"}), 400
 
+    users = supabase.table("User").select("*").eq("id", str(user_id)).execute()
+
+    user = users.data[0]
+
     # Mint nota NFT using web3 wallet
-    private_key = res.get("private_key")
+    private_key = user["private_key"]
     mint_onchain_nota(private_key, private_key_to_address(
         private_key), payment_amount, risk_score)
 
@@ -304,7 +308,7 @@ def initiate_recovery():
     if notas is None:
         return jsonify({"error": "Doesn't exist or not authorized"}), 400
 
-    nota = notas.get("data")
+    nota = notas.data
 
     if len(nota) > 1:
         raise Exception("More than one nota was created")
