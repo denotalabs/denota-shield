@@ -141,8 +141,9 @@ def setup_new_account():
 
     master_address = private_key_to_address(master_private_key)
 
+    amount_wei = w3.to_wei(1000, 'wei')
     # Send USDC to address
-    transfer_tx = usdc_contract.functions.transfer(new_account.address, 1000).build_transaction({
+    transfer_tx = usdc_contract.functions.transfer(new_account.address, amount_wei).build_transaction({
         'chainId': 80001,
         'gas': 400000,
         'gasPrice': w3.to_wei('200', 'gwei'),
@@ -252,10 +253,11 @@ def add_nota():
 
 
 def mint_onchain_nota(key, address, payment_amount, risk_score):
-    risk_fee = (payment_amount/10000)*risk_score
-    risk_fee_wei = w3.to_wei(risk_fee, 'gwei')
+    payment_amount_wei = w3.to_wei(payment_amount, 'wei')
+    risk_fee_wei = (payment_amount_wei/10000.0)*risk_score
+
     payload = encode(["address", "uint256", "unit256"], [
-                     address, payment_amount, risk_score])
+                     address, payment_amount_wei, risk_score])
     transaction = registrar.functions.mint(USDC_TOKEN_ADDRESS, 0, risk_fee_wei, COVERAGE_CONTRACT_ADDRESS, COVERAGE_CONTRACT_ADDRESS, payload).build_transaction({
         'chainId': 80001,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
