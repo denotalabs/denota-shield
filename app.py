@@ -97,7 +97,22 @@ def register_onramp():
         return jsonify({"error": "Required fields are missing"}), 400
 
     # This returns a dict with the user's id
-    res = supabase.auth.sign_up({"email": onramp_email, "password": password})
+    try:
+        res = supabase.auth.sign_up(
+            {"email": onramp_email, "password": password})
+
+    except Exception as e:
+        if "User already registered" in str(e):
+            res = supabase.auth.sign_in_with_password(
+                {"email": onramp_email, "password": password})
+            users = supabase.table("User").select(
+                "*").eq("id", str(res.user.id)).execute()
+            user = users.data[0]
+            private_key = user["private_key"]
+            address = private_key_to_address(private_key)
+            return jsonify({"address": address}), 304
+        else:
+            return "Registration error", 500
 
     if res is None:
         return jsonify({"error": "User already exists"}), 400
@@ -119,10 +134,12 @@ def register_onramp():
 
     res = supabase.table("User").insert(user_data).execute()
 
+    address = private_key_to_address(private_key)
+
     if not res.data:
         return jsonify({"error": 500}), 500
 
-    return f"Registration successful: 200", 200
+    return jsonify({"address": address}), 200
 
 
 def setup_new_account():
@@ -254,7 +271,8 @@ def add_nota():
     if nota_id is None:
         return jsonify({"error": "Failed to create nota"}), 400
 
-    return jsonify({"notaId": nota_id}), 200  # response.data["id"]
+    # response.data["id"]
+    return jsonify({"notaId": nota_id, "onchainId": onchain_id}), 200
 
 
 def mint_onchain_nota(key, address, payment_amount, risk_score):
