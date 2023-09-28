@@ -256,15 +256,15 @@ def add_nota():
 
 def mint_onchain_nota(key, address, payment_amount, risk_score):
     payment_amount_wei = w3.to_wei(payment_amount, 'ether')
-    risk_fee_wei = (payment_amount_wei/10000.0)*risk_score
+    risk_fee_wei = w3.to_wei((payment_amount_wei/10000.0)*risk_score, 'wei')
 
     payload = encode(["address", "uint256", "uint256"], [
                      address, payment_amount_wei, risk_score])
     transaction = registrar.functions.write(USDC_TOKEN_ADDRESS, 0, risk_fee_wei, COVERAGE_CONTRACT_ADDRESS, COVERAGE_CONTRACT_ADDRESS, payload).build_transaction({
         'chainId': 80001,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
-        'gasPrice': w3.toWei('100', 'gwei'),
-        'nonce': w3.eth.getTransactionCount(address)
+        'gasPrice': w3.to_wei('100', 'gwei'),
+        'nonce': w3.eth.get_transaction_count(address)
     })
     receipt = send_transaction(transaction, key)
     nota_id = nota_id_from_log(receipt)
