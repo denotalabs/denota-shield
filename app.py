@@ -73,7 +73,7 @@ def private_key_to_address(private_key: str):
 
 def send_transaction(tx, key):
     signed_tx = w3.eth.account.sign_transaction(tx, key)
-    txn_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+    txn_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
     receipt = w3.eth.wait_for_transaction_receipt(txn_hash)
     return receipt
 
@@ -127,6 +127,7 @@ def setup_new_account():
 
     # Send 0.01 Matic from master account to the new account
     tx = {
+        'chainId': 80001,
         'to': new_account.address,
         'value': Web3.to_wei(0.01, 'ether'),
         'gas': 400000,
