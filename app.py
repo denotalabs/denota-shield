@@ -188,7 +188,8 @@ def onramp_signin():
         return jsonify({"error": "Required fields are missing"}), 400
 
     # This returns a dict with the user's id
-    session = supabase.auth.sign_in(onramp_email, password)
+    session = supabase.auth.sign_in_with_password(
+        {"email": onramp_email, "password": password})
     status_code = session.get("status_code")
     if (status_code != 200) and (status_code != 201):
         return jsonify({"error": status_code}), status_code
