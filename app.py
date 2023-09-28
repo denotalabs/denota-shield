@@ -224,13 +224,14 @@ def add_nota():
 
     # Mint nota NFT using web3 wallet
     private_key = user["private_key"]
-    mint_onchain_nota(private_key, private_key_to_address(
+    onchain_id = mint_onchain_nota(private_key, private_key_to_address(
         private_key), payment_amount, risk_score)
 
     nota_data = {
         "user_id": user_id,
         "payment_amount": payment_amount,
         "risk_score": risk_score,
+        "onchain_id": onchain_id,
         "recovery_status": 0  # 0 = not initiated, 1 = pending, 2 = completed
     }
 
