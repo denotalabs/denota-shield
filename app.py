@@ -235,15 +235,15 @@ def add_nota():
 
     # Sanitize input (don't allow duplicate minting, etc.)
     res = supabase.table("Nota").insert(nota_data).execute()
-    status_code = res.get("status_code")
-    if (status_code != 200) and (status_code != 201):
-        return jsonify({"error": status_code}), status_code
+    status_code = res
+    if not res.data:
+        return jsonify({"error": 500}), 500
 
-    notas = res.get("data")
+    notas = res.data
     if len(notas) > 1:
         raise Exception("More than one nota was created")
 
-    nota_id = notas[0].get("id")
+    nota_id = notas[0]["id"]
     if nota_id is None:
         return jsonify({"error": "Failed to create nota"}), 400
 
