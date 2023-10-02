@@ -5,6 +5,7 @@ import dotenv
 from eth_abi import encode
 from eth_account import Account
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from supabase import Client, create_client
 from web3 import Web3
 
@@ -71,6 +72,7 @@ usdc_contract = w3.eth.contract(
     address=USDC_TOKEN_ADDRESS, abi=erc20_abi)
 
 app = Flask(__name__)
+CORS(app)
 
 # Onboarding endpoint
 

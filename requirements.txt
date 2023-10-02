@@ -77,3 +77,4 @@ werkzeug==2.3.7
 wrapt==1.12.1
 yarl==1.9.2
 zipp==3.17.0
+Flask-Cors==4.0.0
