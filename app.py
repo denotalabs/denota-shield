@@ -86,13 +86,15 @@ def send_transaction(tx, key):
 
 @app.route('/register', methods=['POST'])
 def register_onramp():
-    # TODO: require an invite code to register
-
     onramp_email = request.json.get('email')
     password = request.json.get('password')
     onramp_name = request.json.get('onrampName')
     coverage_tier = request.json.get('coverageTier')
     historical_chargeback_data = request.json.get('historicalChargebackData')
+    invite_code = request.json.get('inviteCode')
+
+    if not invite_code == 'PAYMENTS_R_BROKEN':
+        return jsonify({"error": "Invalid invite code"}), 401
 
     # Input validation
     if not all([onramp_name, onramp_email, password, coverage_tier]):
