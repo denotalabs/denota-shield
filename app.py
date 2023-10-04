@@ -206,6 +206,8 @@ def token_required(f):
 
 
 # Onboarding endpoint
+
+
 @app.route('/signin', methods=['POST'])
 def onramp_signin():
     onramp_email = request.json.get('email')
@@ -223,6 +225,19 @@ def onramp_signin():
         return jsonify({"error": 500}), 500
 
     return res.session.access_token, 200
+
+# Quote endpoint
+
+
+@app.route('/quote', methods=['POST'])
+@token_required
+def get_quote():
+    payment_amount = request.json.get('paymentAmount')
+    risk_score = request.json.get('riskScore')
+
+    quote = (payment_amount/10000.0)*risk_score
+
+    return jsonify({"quote": quote}), 200
 
 # Transactions endpoint
 
