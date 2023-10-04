@@ -1,0 +1,12 @@
+[Unit]
+Description=gunicorn daemon for denota-shield
+After=network.target
+
+[Service]
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/home/ec2-user/denota-shield
+ExecStart=/home/ec2-user/denota-shield/venv/bin/gunicorn app:app -b 0.0.0.0:6000
+
+[Install]
+WantedBy=multi-user.target
