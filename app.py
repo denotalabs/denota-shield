@@ -245,7 +245,7 @@ def refresh_token():
         return jsonify({"error": "Invalid or expired refresh token!"}), 401
 
     # Return the new access token and its expiry time
-    return jsonify({"access_token": res.session.access_token, "expires_in": res.session.expires_in}), 200
+    return jsonify({"access_token": res.session.access_token, "refresh_token": res.session.refresh_token, "expires_in": res.session.expires_in}), 200
 
 
 # Quote endpoint
