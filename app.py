@@ -254,8 +254,8 @@ def refresh_token():
 @app.route('/quote', methods=['POST'])
 @token_required
 def get_quote():
-    payment_amount = request.json.get('paymentAmount')
-    risk_score = request.json.get('riskScore')
+    payment_amount = float(request.json.get('paymentAmount'))
+    risk_score = float(request.json.get('riskScore'))
 
     quote = (payment_amount/10000.0)*risk_score
 
