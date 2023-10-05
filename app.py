@@ -232,7 +232,7 @@ def onramp_signin():
 
 @app.route('/token/refresh', methods=['POST'])
 def refresh_token():
-    refresh_token = request.json.get('refresh_token')
+    refresh_token = request.json.get('refreshToken')
 
     # Validate the input
     if not refresh_token:
