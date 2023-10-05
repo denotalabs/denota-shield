@@ -224,7 +224,7 @@ def onramp_signin():
     if not res.session:
         return jsonify({"error": 500}), 500
 
-    return jsonify({"access_token": res.session.access_token, "expires_in": res.session.expires_in}), 200
+    return jsonify({"access_token": res.session.access_token, "refresh_token": res.session.refresh_token, "expires_in": res.session.expires_in}), 200
 
 
 # Refresh token endpoint
