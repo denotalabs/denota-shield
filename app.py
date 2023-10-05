@@ -271,8 +271,8 @@ def add_nota():
     res = supabase.auth.get_user(request.headers.get('Authorization'))
 
     user_id = res.user.id
-    payment_amount = request.json.get('paymentAmount')
-    risk_score = request.json.get('riskScore')
+    payment_amount = float(request.json.get('paymentAmount'))
+    risk_score = float(request.json.get('riskScore'))
 
     # Ensure the required parameters are provided
     if not all([user_id, payment_amount, risk_score]):
