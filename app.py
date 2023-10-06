@@ -354,6 +354,27 @@ def nota_id_from_log(receipt):
 
     return str(id) if id else None
 
+# Get Notas
+
+
+@app.route('/notas', methods=['GET'])
+@token_required
+def get_notas_for_user():
+    # Retrieve the user from the token
+    res = supabase.auth.get_user(request.headers.get('Authorization'))
+    user_id = res.user.id
+
+    # Query the 'Nota' table using the user_id
+    notas = supabase.table("Nota").select(
+        "*").eq("user_id", str(user_id)).execute()
+
+    # Check if the query returned any notas
+    if not notas:
+        return jsonify({"error": "No notas found for the user"}), 404
+
+    # Return the list of notas
+    return jsonify(notas.data)
+
 # Recovery endpoint
 
 
