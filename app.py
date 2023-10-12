@@ -7,6 +7,7 @@ from eth_account import Account
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from supabase import Client, create_client
+from supabase.lib.client_options import ClientOptions
 from web3 import Web3
 
 
@@ -32,7 +33,10 @@ master_private_key: str = dotenv.get_key(
 
 master_address = private_key_to_address(master_private_key)
 
-supabase: Client = create_client(url, key)
+supabase_options = ClientOptions
+
+supabase: Client = create_client(
+    url, key, ClientOptions(auto_refresh_token=False))
 
 COVERAGE_CONTRACT_ADDRESS = '0xE8958F60bf2e3fa00be499b3E1cBcd52fBf389b6'
 REGISTRAR_CONTRACT_ADDRESS = '0x50d535af78A154a493d6ed466B363DDeBE4Ee88f'
