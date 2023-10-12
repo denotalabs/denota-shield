@@ -33,8 +33,6 @@ master_private_key: str = dotenv.get_key(
 
 master_address = private_key_to_address(master_private_key)
 
-supabase_options = ClientOptions
-
 supabase: Client = create_client(
     url, key, ClientOptions(auto_refresh_token=False))
 
