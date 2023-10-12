@@ -247,6 +247,25 @@ def refresh_token():
     # Return the new access token and its expiry time
     return jsonify({"access_token": res.session.access_token, "refresh_token": res.session.refresh_token, "expires_in": res.session.expires_in}), 200
 
+# User endpoint
+
+
+@app.route('/user', methods=['GET'])
+@token_required
+def get_user():
+    res = supabase.auth.get_user(request.headers.get('Authorization'))
+    user_id = res.user.id
+    email = res.user.email
+
+    users = supabase.table("User").select("*").eq("id", str(user_id)).execute()
+
+    user = users.data[0]
+
+    private_key = user["private_key"]
+    address = private_key_to_address(private_key)
+
+    return jsonify({"subaccount_address": address, "email": email}), 200
+
 
 # Quote endpoint
 
