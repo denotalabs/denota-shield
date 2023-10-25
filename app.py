@@ -293,7 +293,7 @@ def add_nota():
 
     user_id = res.user.id
     payment_amount = float(request.json.get('paymentAmount'))
-    risk_score = float(request.json.get('riskScore'))
+    risk_score = int(request.json.get('riskScore'))
 
     # Ensure the required parameters are provided
     if not all([user_id, payment_amount, risk_score]):
