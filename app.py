@@ -402,18 +402,24 @@ def get_notas_for_user():
 @app.route('/recovery', methods=['POST'])
 @token_required
 def initiate_recovery():
-    user = supabase.auth.get_user(request.headers.get('Authorization'))
+    res = supabase.auth.get_user(request.headers.get('Authorization'))
+    user_id = res.user.id
+    users = supabase.table("User").select("*").eq("id", str(user_id)).execute()
+    user = users.data[0]
 
-    user_id = user["id"]
     private_key = user["private_key"]
+
     nota_id = request.json.get('notaId')
 
     # Initiate recovery onchain
-    tx_hash = initiate_onchain_recovery(
-        private_key, private_key_to_address(private_key), nota_id)
+    try:
+        tx_hash = initiate_onchain_recovery(
+            private_key, private_key_to_address(private_key), nota_id)
+    except:
+        return jsonify({"error": "OnchainRecoveryFailed"}), 500
 
     notas = supabase.table("Nota").select(
-        "*").eq("id", str(nota_id)).eq("user_id", str(user_id)).execute()  # Limit 1?
+        "*").eq("onchain_id", str(nota_id)).eq("user_id", str(user_id)).execute()  # Limit 1?
     if notas is None:
         return jsonify({"error": "Doesn't exist or not authorized"}), 400
 
@@ -423,17 +429,15 @@ def initiate_recovery():
         raise Exception("More than one nota was created")
     nota = nota[0]
 
-    proof_of_chargeback = request.json.get('proofOfChargeback')
-    nota["proof_of_chargeback"] = proof_of_chargeback
+    # TODO: handle proof of chargeback
     nota["recovery_status"] = 1
 
     res = supabase.table("Nota").insert(nota, upsert=True).execute()
 
-    status_code = res.get("status_code")
-    if (status_code != 200) and (status_code != 201):
-        return jsonify({"error": status_code}), status_code
+    if not res.data:
+        return jsonify({"error": 500}), 500
 
-    return jsonify({"message": "success", "hash": tx_hash}), status_code
+    return jsonify({"message": "success", "hash": tx_hash}), 200
 
 
 def initiate_onchain_recovery(key, address, nota_id):
