@@ -409,13 +409,14 @@ def initiate_recovery():
 
     private_key = user["private_key"]
 
-    nota_id = request.json.get('notaId')
+    nota_id = int(request.json.get('notaId'))
 
     # Initiate recovery onchain
     try:
         tx_hash = initiate_onchain_recovery(
             private_key, private_key_to_address(private_key), nota_id)
-    except:
+    except Exception as e:
+        print(e)
         return jsonify({"error": "OnchainRecoveryFailed"}), 500
 
     notas = supabase.table("Nota").select(
