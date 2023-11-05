@@ -334,7 +334,7 @@ def add_nota():
         return jsonify({"error": "Failed to create nota"}), 400
 
     # response.data["id"]
-    return jsonify({"notaId": nota_id, "onchainId": onchain_id}), 200
+    return jsonify({"onchainId": onchain_id}), 200
 
 
 def mint_onchain_nota(key, address, payment_amount, risk_score):
