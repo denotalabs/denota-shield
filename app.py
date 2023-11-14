@@ -36,8 +36,8 @@ master_address = private_key_to_address(master_private_key)
 supabase: Client = create_client(
     url, key, ClientOptions(auto_refresh_token=False))
 
-COVERAGE_CONTRACT_ADDRESS = '0xE8958F60bf2e3fa00be499b3E1cBcd52fBf389b6'
-REGISTRAR_CONTRACT_ADDRESS = '0x50d535af78A154a493d6ed466B363DDeBE4Ee88f'
+COVERAGE_CONTRACT_ADDRESS = '0x16E421294cB4d084D7BD52FaF4183cEffff1cF23'
+REGISTRAR_CONTRACT_ADDRESS = '0x358fd4846d3f6A6Bf5DB5c7fAE0Fc5ED9C1762A1'
 USDC_TOKEN_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
 
 RPC_URL = 'https://polygon-rpc.com/'
