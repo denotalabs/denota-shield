@@ -40,7 +40,7 @@ COVERAGE_CONTRACT_ADDRESS = '0xE8958F60bf2e3fa00be499b3E1cBcd52fBf389b6'
 REGISTRAR_CONTRACT_ADDRESS = '0x50d535af78A154a493d6ed466B363DDeBE4Ee88f'
 USDC_TOKEN_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
 
-RPC_URL = 'https://polygon-mumbai-bor.publicnode.com/'
+RPC_URL = 'https://polygon-rpc.com/'
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 
 erc20_abi = [
