@@ -2,12 +2,10 @@ import json
 from functools import wraps
 
 import dotenv
-from attributedict.collections import AttributeDict
 from eth_abi import encode
 from eth_account import Account
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from hexbytes import HexBytes
 from supabase import Client, create_client
 from supabase.lib.client_options import ClientOptions
 from web3 import Web3
