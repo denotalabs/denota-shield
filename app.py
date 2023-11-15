@@ -319,7 +319,8 @@ def add_nota():
         "payment_amount": payment_amount,
         "risk_score": risk_score,
         "onchain_id": onchain_id,
-        "recovery_status": 0  # 0 = not initiated, 1 = pending, 2 = completed
+        "recovery_status": 0,
+        "chain_id": 137
     }
 
     # Sanitize input (don't allow duplicate minting, etc.)
