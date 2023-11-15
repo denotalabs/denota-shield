@@ -178,6 +178,15 @@ def setup_new_account():
     })
     send_transaction(transfer_tx, master_private_key)
 
+    # Approve the user on the coverage contract
+    whitelist_tx = coverage.functions.addToWhitelist(new_account.address).build_transaction({
+        'chainId': 137,  # For mainnet
+        'gas': 400000,  # Estimated gas, change accordingly
+        'gasPrice': w3.to_wei('400', 'gwei'),
+        'nonce': w3.eth.get_transaction_count(master_address)
+    })
+    send_transaction(whitelist_tx, master_private_key)
+
     new_account_key = new_account.key.hex()
 
     # Approve infinite spending on USDC token for the registrar contract
@@ -189,8 +198,6 @@ def setup_new_account():
         'from': new_account.address
     })
     send_transaction(infinite_approval_tx, new_account_key)
-
-    #TODO: Approve the user on the coverage contract
 
     return new_account_key
 
