@@ -159,20 +159,20 @@ def setup_new_account():
 
     # Send 0.01 Matic from master account to the new account
     tx = {
-        'chainId': 80001,
+        'chainId': 137,
         'to': new_account.address,
         'value': Web3.to_wei(0.05, 'ether'),
         'gas': 400000,
-        'gasPrice': w3.to_wei('200', 'gwei'),
+        'gasPrice': w3.to_wei('400', 'gwei'),
         'nonce': nonce,
     }
     send_transaction(tx, master_private_key)
 
     # Send USDC to address
     transfer_tx = usdc_contract.functions.transfer(new_account.address, convert_to_usdc_format(1)).build_transaction({
-        'chainId': 80001,
+        'chainId': 137,
         'gas': 400000,
-        'gasPrice': w3.to_wei('200', 'gwei'),
+        'gasPrice': w3.to_wei('400', 'gwei'),
         'nonce': w3.eth.get_transaction_count(master_address),
         'from': master_address
     })
@@ -182,9 +182,9 @@ def setup_new_account():
 
     # Approve infinite spending on USDC token for the registrar contract
     infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).build_transaction({
-        'chainId': 80001,
+        'chainId': 137,
         'gas': 400000,
-        'gasPrice': w3.to_wei('100', 'gwei'),
+        'gasPrice': w3.to_wei('400', 'gwei'),
         'nonce': w3.eth.get_transaction_count(new_account.address),
         'from': new_account.address
     })
@@ -346,7 +346,7 @@ def mint_onchain_nota(key, address, payment_amount, risk_score):
     payload = encode(["address", "uint256", "uint256"], [
                      address, payment_amount_wei, risk_score])
     transaction = registrar.functions.write(USDC_TOKEN_ADDRESS, 0, risk_fee_wei, COVERAGE_CONTRACT_ADDRESS, COVERAGE_CONTRACT_ADDRESS, payload).build_transaction({
-        'chainId': 80001,  # For mainnet
+        'chainId': 137,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
         'gasPrice': w3.to_wei('400', 'gwei'),
         'nonce': w3.eth.get_transaction_count(address)
@@ -445,9 +445,9 @@ def initiate_recovery():
 
 def initiate_onchain_recovery(key, address, nota_id):
     transaction = coverage.functions.recoverFunds(nota_id).build_transaction({
-        'chainId': 80001,  # For mainnet
+        'chainId': 137,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
-        'gasPrice': w3.to_wei('200', 'gwei'),
+        'gasPrice': w3.to_wei('400', 'gwei'),
         'nonce': w3.eth.get_transaction_count(address)
     })
     receipt = send_transaction(transaction, key)
