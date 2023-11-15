@@ -38,7 +38,6 @@ supabase: Client = create_client(
 
 COVERAGE_CONTRACT_ADDRESS = '0x16E421294cB4d084D7BD52FaF4183cEffff1cF23'
 REGISTRAR_CONTRACT_ADDRESS = '0x358fd4846d3f6A6Bf5DB5c7fAE0Fc5ED9C1762A1'
-# TODO: use correct exponent for usdc
 USDC_TOKEN_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
 
 RPC_URL = 'https://polygon-rpc.com/'
@@ -86,6 +85,9 @@ def send_transaction(tx, key):
     receipt = w3.eth.wait_for_transaction_receipt(txn_hash)
     return receipt
 
+def convert_to_usdc_format(amount):
+    decimals = 6  # USDC has 6 decimal places
+    return int(amount * (10 ** decimals))
 
 @app.route('/register', methods=['POST'])
 def register_onramp():
@@ -166,9 +168,8 @@ def setup_new_account():
     }
     send_transaction(tx, master_private_key)
 
-    amount_wei = w3.to_wei(1000, 'ether')
     # Send USDC to address
-    transfer_tx = usdc_contract.functions.transfer(new_account.address, amount_wei).build_transaction({
+    transfer_tx = usdc_contract.functions.transfer(new_account.address, convert_to_usdc_format(1)).build_transaction({
         'chainId': 80001,
         'gas': 400000,
         'gasPrice': w3.to_wei('200', 'gwei'),
@@ -339,15 +340,15 @@ def add_nota():
 
 
 def mint_onchain_nota(key, address, payment_amount, risk_score):
-    payment_amount_wei = w3.to_wei(payment_amount, 'ether')
-    risk_fee_wei = w3.to_wei((payment_amount_wei/10000.0)*risk_score, 'wei')
+    payment_amount_wei = convert_to_usdc_format(payment_amount)
+    risk_fee_wei = convert_to_usdc_format((payment_amount_wei/10000.0)*risk_score)
 
     payload = encode(["address", "uint256", "uint256"], [
                      address, payment_amount_wei, risk_score])
     transaction = registrar.functions.write(USDC_TOKEN_ADDRESS, 0, risk_fee_wei, COVERAGE_CONTRACT_ADDRESS, COVERAGE_CONTRACT_ADDRESS, payload).build_transaction({
         'chainId': 80001,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
-        'gasPrice': w3.to_wei('100', 'gwei'),
+        'gasPrice': w3.to_wei('400', 'gwei'),
         'nonce': w3.eth.get_transaction_count(address)
     })
     receipt = send_transaction(transaction, key)
