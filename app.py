@@ -178,6 +178,15 @@ def setup_new_account():
     })
     send_transaction(transfer_tx, master_private_key)
 
+    # Approve the user on the coverage contract
+    whitelist_tx = coverage.functions.addToWhitelist(new_account.address).build_transaction({
+        'chainId': 137,  # For mainnet
+        'gas': 400000,  # Estimated gas, change accordingly
+        'gasPrice': w3.to_wei('400', 'gwei'),
+        'nonce': w3.eth.get_transaction_count(master_address)
+    })
+    send_transaction(whitelist_tx, master_private_key)
+
     new_account_key = new_account.key.hex()
 
     # Approve infinite spending on USDC token for the registrar contract
@@ -349,10 +358,11 @@ def mint_onchain_nota(key, address, payment_amount, risk_score):
     transaction = registrar.functions.write(USDC_TOKEN_ADDRESS, 0, risk_fee_wei, COVERAGE_CONTRACT_ADDRESS, COVERAGE_CONTRACT_ADDRESS, payload).build_transaction({
         'chainId': 137,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
-        'gasPrice': w3.to_wei('400', 'gwei'),
+        'gasPrice': w3.to_wei('800', 'gwei'),
         'nonce': w3.eth.get_transaction_count(address)
     })
     receipt = send_transaction(transaction, key)
+
     nota_id = nota_id_from_log(receipt)
 
     return receipt['transactionHash'].hex(), nota_id
@@ -363,20 +373,14 @@ def nota_id_from_log(receipt):
     contract = w3.eth.contract(abi=eventsABI)
 
     # Parse logs
-    parsed_logs = []
     for log in receipt['logs']:
         try:
             parsed_log = contract.events.Written().process_log(log)
-            parsed_logs.append(parsed_log)
+            return str(parsed_log['args']['cheqId'])
         except:
             pass
 
-    # Filter logs for event with the name "Written"
-    written_logs = [log for log in parsed_logs if log['event'] == 'Written']
-
-    id = written_logs[0]['args']['cheqId'] if written_logs else None
-
-    return str(id) if id else None
+    return None
 
 # Get Notas
 
