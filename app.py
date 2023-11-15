@@ -342,7 +342,7 @@ def add_nota():
 
 def mint_onchain_nota(key, address, payment_amount, risk_score):
     payment_amount_wei = convert_to_usdc_format(payment_amount)
-    risk_fee_wei = convert_to_usdc_format((payment_amount_wei/10000.0)*risk_score)
+    risk_fee_wei = int((payment_amount_wei/10000.0)*risk_score)
 
     payload = encode(["address", "uint256", "uint256"], [
                      address, payment_amount_wei, risk_score])
