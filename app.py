@@ -282,12 +282,29 @@ def get_user():
 
 # Quote endpoint
 
+def get_risk_score(user):
+    coverage_tier = user["coverage_tier"]
+
+    if coverage_tier == "4":
+        risk_score = 50
+    else:
+        risk_score = 60
+
+    return risk_score
+
 
 @app.route('/quote', methods=['POST'])
 @token_required
 def get_quote():
+    res = supabase.auth.get_user(request.headers.get('Authorization'))
+
+    user_id = res.user.id
+    users = supabase.table("User").select("*").eq("id", str(user_id)).execute()
+    user = users.data[0]
+
     payment_amount = float(request.json.get('paymentAmount'))
-    risk_score = float(request.json.get('riskScore'))
+
+    risk_score = get_risk_score(user)
 
     quote = (payment_amount/10000.0)*risk_score
 
@@ -304,7 +321,6 @@ def add_nota():
 
     user_id = res.user.id
     payment_amount = float(request.json.get('paymentAmount'))
-    risk_score = int(request.json.get('riskScore'))
 
     # Ensure the required parameters are provided
     if not all([user_id, payment_amount, risk_score]):
@@ -313,6 +329,8 @@ def add_nota():
     users = supabase.table("User").select("*").eq("id", str(user_id)).execute()
 
     user = users.data[0]
+
+    risk_score = get_risk_score(user)
 
     # Mint nota NFT using web3 wallet
     private_key = user["private_key"]
