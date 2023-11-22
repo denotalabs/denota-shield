@@ -344,7 +344,6 @@ def add_nota():
     nota_data = {
         "user_id": user_id,
         "payment_amount": payment_amount,
-        "risk_score": risk_score,
         "onchain_id": onchain_id,
         "recovery_status": 0,
         "chain_id": 137, 
