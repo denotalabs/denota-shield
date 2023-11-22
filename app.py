@@ -335,7 +335,7 @@ def add_nota():
     # Mint nota NFT using web3 wallet
     private_key = user["private_key"]
     address = private_key_to_address(private_key)
-    _, onchain_id = mint_onchain_nota(
+    tx_hash, onchain_id = mint_onchain_nota(
         private_key, address, payment_amount, risk_score)
 
     if onchain_id is None:
@@ -347,7 +347,8 @@ def add_nota():
         "risk_score": risk_score,
         "onchain_id": onchain_id,
         "recovery_status": 0,
-        "chain_id": 137
+        "chain_id": 137, 
+        "mint_tx_hash": tx_hash
     }
 
     # Sanitize input (don't allow duplicate minting, etc.)
@@ -477,14 +478,15 @@ def initiate_onchain_recovery(key, address, nota_id, payout_address, payout_amou
     receipt = send_transaction(transaction, key)
 
     # Send USDC to payout address
-    transfer_tx = usdc_contract.functions.transfer(payout_address, convert_to_usdc_format(payout_amount)).build_transaction({
-        'chainId': 137,
-        'gas': 400000,
-        'gasPrice': w3.to_wei('400', 'gwei'),
-        'nonce': w3.eth.get_transaction_count(address),
-        'from': address
-    })
-    send_transaction(transfer_tx, key)
+    if payout_address is not None:
+        transfer_tx = usdc_contract.functions.transfer(payout_address, convert_to_usdc_format(payout_amount)).build_transaction({
+            'chainId': 137,
+            'gas': 400000,
+            'gasPrice': w3.to_wei('400', 'gwei'),
+            'nonce': w3.eth.get_transaction_count(address),
+            'from': address
+        })
+        send_transaction(transfer_tx, key)
 
     return receipt['transactionHash'].hex()
 
