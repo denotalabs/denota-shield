@@ -435,14 +435,7 @@ def initiate_recovery():
     private_key = user["private_key"]
 
     nota_id = int(request.json.get('notaId'))
-
-    # Initiate recovery onchain
-    try:
-        tx_hash = initiate_onchain_recovery(
-            private_key, private_key_to_address(private_key), nota_id)
-    except Exception as e:
-        print(e)
-        return jsonify({"error": "OnchainRecoveryFailed"}), 500
+    payout_address = request.json.get('payoutAddress')
 
     notas = supabase.table("Nota").select(
         "*").eq("onchain_id", str(nota_id)).eq("user_id", str(user_id)).execute()  # Limit 1?
@@ -455,6 +448,14 @@ def initiate_recovery():
         raise Exception("More than one nota was created")
     nota = nota[0]
 
+    # Initiate recovery onchain
+    try:
+        tx_hash = initiate_onchain_recovery(
+            private_key, private_key_to_address(private_key), nota_id, payout_address, nota["payment_amount"])
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "OnchainRecoveryFailed"}), 500
+
     # TODO: handle proof of chargeback
     nota["recovery_status"] = 1
 
@@ -466,7 +467,7 @@ def initiate_recovery():
     return jsonify({"message": "success", "hash": tx_hash}), 200
 
 
-def initiate_onchain_recovery(key, address, nota_id):
+def initiate_onchain_recovery(key, address, nota_id, payout_address, payout_amount):
     transaction = coverage.functions.recoverFunds(nota_id).build_transaction({
         'chainId': 137,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
@@ -474,6 +475,16 @@ def initiate_onchain_recovery(key, address, nota_id):
         'nonce': w3.eth.get_transaction_count(address)
     })
     receipt = send_transaction(transaction, key)
+
+    # Send USDC to payout address
+    transfer_tx = usdc_contract.functions.transfer(payout_address, convert_to_usdc_format(payout_amount)).build_transaction({
+        'chainId': 137,
+        'gas': 400000,
+        'gasPrice': w3.to_wei('400', 'gwei'),
+        'nonce': w3.eth.get_transaction_count(address),
+        'from': address
+    })
+    send_transaction(transfer_tx, key)
 
     return receipt['transactionHash'].hex()
 
