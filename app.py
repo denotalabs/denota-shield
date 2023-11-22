@@ -322,15 +322,15 @@ def add_nota():
     user_id = res.user.id
     payment_amount = float(request.json.get('paymentAmount'))
 
-    # Ensure the required parameters are provided
-    if not all([user_id, payment_amount, risk_score]):
-        return jsonify({"error": "Required parameters missing!"}), 400
-
     users = supabase.table("User").select("*").eq("id", str(user_id)).execute()
 
     user = users.data[0]
 
     risk_score = get_risk_score(user)
+
+    # Ensure the required parameters are provided
+    if not all([user_id, payment_amount, risk_score]):
+        return jsonify({"error": "Required parameters missing!"}), 400
 
     # Mint nota NFT using web3 wallet
     private_key = user["private_key"]
