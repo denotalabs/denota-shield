@@ -6,23 +6,23 @@ Clone the repository.
 
 Create the virtual environment
 ```bash
-$ python -m venv venv
+python3 -m venv venv
 ```
 
 Activate the virtual environment
 ```bash
-$ source venv/bin/activate
+source venv/bin/activate
 ```
 
 Install the requirements
 ```bash
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 Navigate to the project directory and run the Flask application:
 
 ```bash
-$ python app.py
+python app.py
 ```
 
 The server should now be running at http://127.0.0.1:5000/. 
