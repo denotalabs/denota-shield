@@ -25,7 +25,7 @@ Navigate to the project directory and run the Flask application:
 python app.py
 ```
 
-The server should now be running at http://127.0.0.1:5000/. 
+The server should now be running at http://127.0.0.1:6000/. 
 
 ## Endpoints
 
