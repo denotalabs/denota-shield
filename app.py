@@ -96,8 +96,6 @@ def register_onramp():
     onramp_email = request.json.get('email')
     password = request.json.get('password')
     onramp_name = request.json.get('onrampName')
-    coverage_tier = request.json.get('coverageTier')
-    historical_chargeback_data = request.json.get('historicalChargebackData')
     invite_code = request.json.get('inviteCode')
 
     codes = supabase.table("InviteCodes").select(
@@ -109,7 +107,7 @@ def register_onramp():
     code = codes.data[0]
 
     # Input validation
-    if not all([onramp_name, onramp_email, password, coverage_tier]):
+    if not all([onramp_name, onramp_email, password]):
         return jsonify({"error": "Required fields are missing"}), 400
 
     # This returns a dict with the user's id
@@ -147,8 +145,8 @@ def register_onramp():
     user_data = {
         "id": auth_res.user.id,
         "name": onramp_name,
-        "coverage_tier": coverage_tier,
-        "historical_chargeback_data": historical_chargeback_data,
+        "coverage_tier": "4",
+        "historical_chargeback_data": {},
         "private_key": private_key
     }
 
@@ -168,13 +166,15 @@ def setup_new_account():
     nonce = w3.eth.get_transaction_count(
         private_key_to_address(master_private_key))
 
+    # TODO: Optimize these transactions
+
     # Send 0.01 Matic from master account to the new account
     tx = {
         'chainId': 137,
         'to': new_account.address,
         'value': Web3.to_wei(0.05, 'ether'),
         'gas': 400000,
-        'gasPrice': w3.to_wei('400', 'gwei'),
+        'gasPrice': w3.to_wei('600', 'gwei'),
         'nonce': nonce,
     }
     send_transaction(tx, master_private_key)
@@ -183,7 +183,7 @@ def setup_new_account():
     transfer_tx = usdc_contract.functions.transfer(new_account.address, convert_to_usdc_format(1)).build_transaction({
         'chainId': 137,
         'gas': 400000,
-        'gasPrice': w3.to_wei('400', 'gwei'),
+        'gasPrice': w3.to_wei('600', 'gwei'),
         'nonce': w3.eth.get_transaction_count(master_address),
         'from': master_address
     })
@@ -193,7 +193,7 @@ def setup_new_account():
     whitelist_tx = coverage.functions.addToWhitelist(new_account.address).build_transaction({
         'chainId': 137,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
-        'gasPrice': w3.to_wei('400', 'gwei'),
+        'gasPrice': w3.to_wei('600', 'gwei'),
         'nonce': w3.eth.get_transaction_count(master_address)
     })
     send_transaction(whitelist_tx, master_private_key)
@@ -204,7 +204,7 @@ def setup_new_account():
     infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).build_transaction({
         'chainId': 137,
         'gas': 400000,
-        'gasPrice': w3.to_wei('400', 'gwei'),
+        'gasPrice': w3.to_wei('600', 'gwei'),
         'nonce': w3.eth.get_transaction_count(new_account.address),
         'from': new_account.address
     })
