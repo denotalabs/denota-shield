@@ -96,28 +96,34 @@ def register_onramp():
     onramp_email = request.json.get('email')
     password = request.json.get('password')
     onramp_name = request.json.get('onrampName')
-    coverage_tier = request.json.get('coverageTier')
-    historical_chargeback_data = request.json.get('historicalChargebackData')
     invite_code = request.json.get('inviteCode')
 
-    if not invite_code == 'PAYMENTS_R_BROKEN':
+    codes = supabase.table("InviteCodes").select(
+        "*").eq("code", str(invite_code)).execute()
+
+    if len(codes.data) == 0:
         return jsonify({"error": "Invalid invite code"}), 401
 
+    code = codes.data[0]
+
+    if code["is_used"]:
+        return jsonify({"error": "Invite code used"}), 401
+
     # Input validation
-    if not all([onramp_name, onramp_email, password, coverage_tier]):
+    if not all([onramp_name, onramp_email, password]):
         return jsonify({"error": "Required fields are missing"}), 400
 
     # This returns a dict with the user's id
     try:
-        res = supabase.auth.sign_up(
+        auth_res = supabase.auth.sign_up(
             {"email": onramp_email, "password": password})
 
     except Exception as e:
         if "User already registered" in str(e):
-            res = supabase.auth.sign_in_with_password(
+            auth_res = supabase.auth.sign_in_with_password(
                 {"email": onramp_email, "password": password})
             users = supabase.table("User").select(
-                "*").eq("id", str(res.user.id)).execute()
+                "*").eq("id", str(auth_res.user.id)).execute()
             user = users.data[0]
             private_key = user["private_key"]
             address = private_key_to_address(private_key)
@@ -125,21 +131,24 @@ def register_onramp():
         else:
             return "Registration error", 500
 
-    if res is None:
+    if auth_res is None:
         return jsonify({"error": "User already exists"}), 400
 
-    if not res.user:
+    if not auth_res.user:
         return jsonify({"error": 500}), 500
 
     # generate user's web3 wallet then save it to the database
     private_key = setup_new_account()
 
+    # set invite code to used
+    code["is_used"] = True
+    supabase.table("InviteCodes").insert(code, upsert=True).execute()
+
     # add to user table
     user_data = {
-        "id": res.user.id,
+        "id": auth_res.user.id,
         "name": onramp_name,
-        "coverage_tier": coverage_tier,
-        "historical_chargeback_data": historical_chargeback_data,
+        "coverage_tier": "4",
         "private_key": private_key
     }
 
@@ -150,7 +159,7 @@ def register_onramp():
     if not res.data:
         return jsonify({"error": 500}), 500
 
-    return jsonify({"address": address}), 200
+    return jsonify({"address": address, "access_token": auth_res.session.access_token, "refresh_token": auth_res.session.refresh_token, "expires_in": auth_res.session.expires_in}), 200
 
 
 def setup_new_account():
@@ -159,13 +168,15 @@ def setup_new_account():
     nonce = w3.eth.get_transaction_count(
         private_key_to_address(master_private_key))
 
+    # TODO: Optimize these transactions
+
     # Send 0.01 Matic from master account to the new account
     tx = {
         'chainId': 137,
         'to': new_account.address,
         'value': Web3.to_wei(0.05, 'ether'),
         'gas': 400000,
-        'gasPrice': w3.to_wei('400', 'gwei'),
+        'gasPrice': w3.to_wei('600', 'gwei'),
         'nonce': nonce,
     }
     send_transaction(tx, master_private_key)
@@ -174,7 +185,7 @@ def setup_new_account():
     transfer_tx = usdc_contract.functions.transfer(new_account.address, convert_to_usdc_format(1)).build_transaction({
         'chainId': 137,
         'gas': 400000,
-        'gasPrice': w3.to_wei('400', 'gwei'),
+        'gasPrice': w3.to_wei('600', 'gwei'),
         'nonce': w3.eth.get_transaction_count(master_address),
         'from': master_address
     })
@@ -184,7 +195,7 @@ def setup_new_account():
     whitelist_tx = coverage.functions.addToWhitelist(new_account.address).build_transaction({
         'chainId': 137,  # For mainnet
         'gas': 400000,  # Estimated gas, change accordingly
-        'gasPrice': w3.to_wei('400', 'gwei'),
+        'gasPrice': w3.to_wei('600', 'gwei'),
         'nonce': w3.eth.get_transaction_count(master_address)
     })
     send_transaction(whitelist_tx, master_private_key)
@@ -195,7 +206,7 @@ def setup_new_account():
     infinite_approval_tx = usdc_contract.functions.approve(REGISTRAR_CONTRACT_ADDRESS, 2**256 - 1).build_transaction({
         'chainId': 137,
         'gas': 400000,
-        'gasPrice': w3.to_wei('400', 'gwei'),
+        'gasPrice': w3.to_wei('600', 'gwei'),
         'nonce': w3.eth.get_transaction_count(new_account.address),
         'from': new_account.address
     })
@@ -514,4 +525,4 @@ def get_recovery(nota_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=6000)
+    app.run(debug=True, port=3001)
