@@ -103,6 +103,13 @@ def register_onramp():
     if not invite_code == 'PAYMENTS_R_BROKEN':
         return jsonify({"error": "Invalid invite code"}), 401
 
+    codes = supabase.table("InviteCodes").select("*").eq("code", str(invite_code)).execute()
+
+    if len(codes.data) == 0: 
+        return jsonify({"error": "Invalid invite code"}), 401
+    
+    code = codes.data[0]
+
     # Input validation
     if not all([onramp_name, onramp_email, password, coverage_tier]):
         return jsonify({"error": "Required fields are missing"}), 400
@@ -133,6 +140,10 @@ def register_onramp():
 
     # generate user's web3 wallet then save it to the database
     private_key = setup_new_account()
+
+    # set invite code to used 
+    code["is_used"] = True
+    supabase.table("InviteCodes").insert(code, upsert=True).execute()
 
     # add to user table
     user_data = {
