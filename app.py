@@ -100,14 +100,12 @@ def register_onramp():
     historical_chargeback_data = request.json.get('historicalChargebackData')
     invite_code = request.json.get('inviteCode')
 
-    if not invite_code == 'PAYMENTS_R_BROKEN':
+    codes = supabase.table("InviteCodes").select(
+        "*").eq("code", str(invite_code)).execute()
+
+    if len(codes.data) == 0:
         return jsonify({"error": "Invalid invite code"}), 401
 
-    codes = supabase.table("InviteCodes").select("*").eq("code", str(invite_code)).execute()
-
-    if len(codes.data) == 0: 
-        return jsonify({"error": "Invalid invite code"}), 401
-    
     code = codes.data[0]
 
     # Input validation
@@ -141,7 +139,7 @@ def register_onramp():
     # generate user's web3 wallet then save it to the database
     private_key = setup_new_account()
 
-    # set invite code to used 
+    # set invite code to used
     code["is_used"] = True
     supabase.table("InviteCodes").insert(code, upsert=True).execute()
 
