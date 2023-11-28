@@ -114,15 +114,15 @@ def register_onramp():
 
     # This returns a dict with the user's id
     try:
-        res = supabase.auth.sign_up(
+        auth_res = supabase.auth.sign_up(
             {"email": onramp_email, "password": password})
 
     except Exception as e:
         if "User already registered" in str(e):
-            res = supabase.auth.sign_in_with_password(
+            auth_res = supabase.auth.sign_in_with_password(
                 {"email": onramp_email, "password": password})
             users = supabase.table("User").select(
-                "*").eq("id", str(res.user.id)).execute()
+                "*").eq("id", str(auth_res.user.id)).execute()
             user = users.data[0]
             private_key = user["private_key"]
             address = private_key_to_address(private_key)
@@ -130,10 +130,10 @@ def register_onramp():
         else:
             return "Registration error", 500
 
-    if res is None:
+    if auth_res is None:
         return jsonify({"error": "User already exists"}), 400
 
-    if not res.user:
+    if not auth_res.user:
         return jsonify({"error": 500}), 500
 
     # generate user's web3 wallet then save it to the database
@@ -145,7 +145,7 @@ def register_onramp():
 
     # add to user table
     user_data = {
-        "id": res.user.id,
+        "id": auth_res.user.id,
         "name": onramp_name,
         "coverage_tier": coverage_tier,
         "historical_chargeback_data": historical_chargeback_data,
@@ -159,7 +159,7 @@ def register_onramp():
     if not res.data:
         return jsonify({"error": 500}), 500
 
-    return jsonify({"address": address}), 200
+    return jsonify({"address": address, "access_token": auth_res.session.access_token, "refresh_token": auth_res.session.refresh_token, "expires_in": auth_res.session.expires_in}), 200
 
 
 def setup_new_account():
