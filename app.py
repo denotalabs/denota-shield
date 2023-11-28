@@ -85,9 +85,11 @@ def send_transaction(tx, key):
     receipt = w3.eth.wait_for_transaction_receipt(txn_hash)
     return receipt
 
+
 def convert_to_usdc_format(amount):
     decimals = 6  # USDC has 6 decimal places
     return int(amount * (10 ** decimals))
+
 
 @app.route('/register', methods=['POST'])
 def register_onramp():
@@ -346,7 +348,7 @@ def add_nota():
         "payment_amount": payment_amount,
         "onchain_id": onchain_id,
         "recovery_status": 0,
-        "chain_id": 137, 
+        "chain_id": 137,
         "mint_tx_hash": tx_hash
     }
 
@@ -364,7 +366,7 @@ def add_nota():
         return jsonify({"error": "Failed to create nota"}), 400
 
     # response.data["id"]
-    return jsonify({"onchainId": onchain_id}), 200
+    return jsonify({"notaId": str(nota_id), "onchainId": onchain_id, "txHash": tx_hash}), 200
 
 
 def mint_onchain_nota(key, address, payment_amount, risk_score):
