@@ -106,6 +106,9 @@ def register_onramp():
 
     code = codes.data[0]
 
+    if code["is_used"]:
+        return jsonify({"error": "Invite code used"}), 401
+
     # Input validation
     if not all([onramp_name, onramp_email, password]):
         return jsonify({"error": "Required fields are missing"}), 400
@@ -146,7 +149,6 @@ def register_onramp():
         "id": auth_res.user.id,
         "name": onramp_name,
         "coverage_tier": "4",
-        "historical_chargeback_data": {},
         "private_key": private_key
     }
 
@@ -523,4 +525,4 @@ def get_recovery(nota_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=6000)
+    app.run(debug=True, port=3001)

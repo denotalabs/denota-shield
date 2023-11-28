@@ -32,7 +32,7 @@ Run the Flask application:
 python app.py
 ```
 
-The server should now be running at http://127.0.0.1:6000/. 
+The server should now be running at http://127.0.0.1:3001/. 
 
 ## Endpoints
 
