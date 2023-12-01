@@ -174,7 +174,7 @@ def setup_new_account():
     tx = {
         'chainId': 137,
         'to': new_account.address,
-        'value': Web3.to_wei(0.05, 'ether'),
+        'value': Web3.to_wei(0.3, 'ether'),
         'gas': 400000,
         'gasPrice': w3.to_wei('600', 'gwei'),
         'nonce': nonce,
